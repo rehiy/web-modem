@@ -20,7 +20,6 @@ type SerialService struct {
 	name       string
 	port       *serial.Port
 	lock       *sync.Mutex
-	longSMSMap map[string]*models.LongSMS
 }
 
 func newSerialService(name string, port *serial.Port) *SerialService {
@@ -28,7 +27,6 @@ func newSerialService(name string, port *serial.Port) *SerialService {
 		name:       name,
 		port:       port,
 		lock:       &sync.Mutex{},
-		longSMSMap: make(map[string]*models.LongSMS),
 	}
 }
 
@@ -99,7 +97,7 @@ func (s *SerialService) sendRawCommand(command, append string) (string, error) {
 				return response, nil
 			}
 			continue
-		} 
+		}
 
 		// 无数据时检查是否超时
 		if time.Since(lastData) > 5*time.Second || time.Now().After(deadline) {
