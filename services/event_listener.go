@@ -8,7 +8,7 @@ var (
 )
 
 type EventListener struct {
-	listeners map[chan string]struct{}
+	pool map[chan string]struct{}
 	mu        sync.RWMutex
 }
 
@@ -16,7 +16,7 @@ type EventListener struct {
 func GetEventListener() *EventListener {
 	listenerOnce.Do(func() {
 		listenerInstance = &EventListener{
-			listeners: make(map[chan string]struct{}),
+			pool: make(map[chan string]struct{}),
 		}
 	})
 	return listenerInstance
@@ -25,8 +25,8 @@ func GetEventListener() *EventListener {
 // Broadcast 向所有监听器发送消息（非阻塞，包内使用）。
 func (el *EventListener) Broadcast(message string) {
 	el.mu.RLock()
-	snapshot := make([]chan string, 0, len(el.listeners))
-	for ch := range el.listeners {
+	snapshot := make([]chan string, 0, len(el.pool))
+	for ch := range el.pool {
 		snapshot = append(snapshot, ch)
 	}
 	el.mu.RUnlock()
@@ -53,15 +53,15 @@ func (el *EventListener) Subscribe(buffer int) (chan string, func()) {
 // addListener 注册一个新的监听通道（包内使用）。
 func (el *EventListener) addListener(ch chan string) {
 	el.mu.Lock()
-	el.listeners[ch] = struct{}{}
+	el.pool[ch] = struct{}{}
 	el.mu.Unlock()
 }
 
 // removeListener 注销监听通道并关闭它（包内使用）。
 func (el *EventListener) removeListener(ch chan string) {
 	el.mu.Lock()
-	if _, ok := el.listeners[ch]; ok {
-		delete(el.listeners, ch)
+	if _, ok := el.pool[ch]; ok {
+		delete(el.pool, ch)
 		close(ch)
 	}
 	el.mu.Unlock()

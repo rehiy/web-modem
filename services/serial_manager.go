@@ -14,7 +14,7 @@ var (
 )
 
 type SerialManager struct {
-	services map[string]*SerialService
+	pool map[string]*SerialService
 	mu       sync.Mutex
 }
 
@@ -22,7 +22,7 @@ type SerialManager struct {
 func GetSerialManager() *SerialManager {
 	managerOnce.Do(func() {
 		managerInstance = &SerialManager{
-			services: make(map[string]*SerialService),
+			pool: make(map[string]*SerialService),
 		}
 	})
 	return managerInstance
@@ -38,17 +38,17 @@ func (m *SerialManager) Scan(baudRate int) ([]models.SerialPort, error) {
 	candidates := append(usbPorts, acmPorts...)
 
 	for _, p := range candidates {
-		if _, ok := m.services[p]; ok {
+		if _, ok := m.pool[p]; ok {
 			continue // 已连接
 		}
 		if svc, err := NewSerialService(p, baudRate); err == nil {
-			m.services[p] = svc
+			m.pool[p] = svc
 			svc.Start()
 		}
 	}
 
 	var result []models.SerialPort
-	for name := range m.services {
+	for name := range m.pool {
 		result = append(result, models.SerialPort{Name: name, Path: name, Connected: true})
 	}
 	return result, nil
@@ -59,7 +59,7 @@ func (m *SerialManager) GetService(name string) (*SerialService, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	service, ok := m.services[name]
+	service, ok := m.pool[name]
 	if !ok {
 		return nil, fmt.Errorf("port not connected: %s", name)
 	}
