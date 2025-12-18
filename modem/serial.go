@@ -30,7 +30,7 @@ const (
 	cmdIMSI         = "AT+CIMI"
 	cmdOperator     = "AT+COPS?"
 	cmdNumber       = "AT+CNUM"
-	
+
 	// 超时和延迟
 	readTimeout     = 100 * time.Millisecond
 	errorSleep      = 100 * time.Millisecond
@@ -88,11 +88,11 @@ func (s *SerialService) readLoop() {
 		s.Lock()
 		n, err := s.port.Read(buf)
 		s.Unlock()
-		
+
 		if n > 0 && s.broadcast != nil {
 			s.broadcast(fmt.Sprintf("[%s] %s", s.name, string(buf[:n])))
 		}
-		
+
 		if err != nil {
 			time.Sleep(errorSleep)
 		}
@@ -116,7 +116,7 @@ func (s *SerialService) sendRawCommand(command, suffix string) (string, error) {
 
 	var resp strings.Builder
 	buf := make([]byte, bufferSize)
-	
+
 	for {
 		n, err := s.port.Read(buf)
 		if n > 0 {
@@ -142,17 +142,17 @@ func (s *SerialService) GetModemInfo() (*ModemInfo, error) {
 		&info.IMEI:         cmdIMEI,
 		&info.IMSI:         cmdIMSI,
 	}
-	
+
 	for ptr, cmd := range cmds {
 		if resp, err := s.SendATCommand(cmd); err == nil {
 			*ptr = extractValue(resp)
 		}
 	}
-	
+
 	if resp, err := s.SendATCommand(cmdOperator); err == nil {
 		info.Operator = extractOperator(resp)
 	}
-	
+
 	info.PhoneNumber, _ = s.GetPhoneNumber()
 	return info, nil
 }
@@ -175,12 +175,12 @@ func (s *SerialService) GetSignalStrength() (*SignalStrength, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var rssi, qual int
 	if _, err := fmt.Sscanf(extractValue(resp), "+CSQ: %d,%d", &rssi, &qual); err != nil {
 		return nil, err
 	}
-	
+
 	return &SignalStrength{
 		RSSI:    rssi,
 		Quality: qual,
@@ -196,21 +196,22 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 	}
 
 	var parts []struct { SMS; ref, total, seq int }
-	
+
 	// 按 +CMGL: 分割以处理多条消息
 	chunks := strings.Split(resp, "+CMGL: ")
 	for _, chunk := range chunks[1:] { // 跳过第一个空部分
 		lines := strings.SplitN(chunk, "\n", 2)
 		if len(lines) < 2 { continue }
-		
-		meta, content := lines[0], strings.TrimSpace(strings.TrimSuffix(lines[1], "OK"))
+
 		// 解析元数据: index,"status","oa",,"scts"
-		fields := strings.Split(meta, ",")
+		fields := strings.Split(strings.TrimSpace(lines[0]), ",")
 		if len(fields) < 5 { continue }
-		
+
 		idx, _ := strconv.Atoi(strings.TrimSpace(fields[0]))
+
+		content := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(lines[1]), "OK"))
 		txt, ref, tot, seq := decodeHexSMS(content)
-		
+
 		parts = append(parts, struct{ SMS; ref, total, seq int }{
 			SMS: SMS{
 				Index:   idx,
@@ -226,7 +227,7 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 	// 合并长短信
 	merged := make(map[string][]struct{ seq int; msg string })
 	var result []SMS
-	
+
 	for _, p := range parts {
 		if p.total <= 1 {
 			result = append(result, p.SMS)
@@ -235,12 +236,12 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 		key := fmt.Sprintf("%s_%d", p.Number, p.ref)
 		merged[key] = append(merged[key], struct{ seq int; msg string }{p.seq, p.Message})
 	}
-	
+
 	for key, fragments := range merged {
 		sort.Slice(fragments, func(i, j int) bool { return fragments[i].seq < fragments[j].seq })
 		fullMsg := ""
 		for _, f := range fragments { fullMsg += f.msg }
-		
+
 		// 从部分中查找原始元数据（效率低但简单）
 		for _, p := range parts {
 			if fmt.Sprintf("%s_%d", p.Number, p.ref) == key && p.seq == 1 {
@@ -250,7 +251,7 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 			}
 		}
 	}
-	
+
 	sort.Slice(result, func(i, j int) bool { return result[i].Index < result[j].Index })
 	return result, nil
 }
@@ -295,7 +296,7 @@ func decodeHexSMS(content string) (string, int, int, int) {
 	if err != nil || len(content)%2 != 0 { return content, 0, 1, 1 }
 
 	offset, ref, total, seq := 0, 0, 1, 1
-	
+
 	// 检查级联短信 UDH（用户数据头）
 	// 05 00 03 [引用] [总数] [序号]
 	if len(b) > 6 && b[0] == 5 && b[1] == 0 && b[2] == 3 {
@@ -306,7 +307,7 @@ func decodeHexSMS(content string) (string, int, int, int) {
 	}
 
 	if (len(b)-offset)%2 != 0 { return content, 0, 1, 1 }
-	
+
 	// 解码 UTF-16BE
 	u16 := make([]uint16, (len(b)-offset)/2)
 	for i := range u16 {

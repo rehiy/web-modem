@@ -38,7 +38,7 @@ func (m *SerialManager) Scan(baudRate int) ([]modem.SerialPort, error) {
 	// 查找潜在设备
 	usb, _ := filepath.Glob("/dev/ttyUSB*")
 	acm, _ := filepath.Glob("/dev/ttyACM*")
-	
+
 	// 尝试连接到新设备
 	for _, p := range append(usb, acm...) {
 		if _, exists := m.pool[p]; !exists {

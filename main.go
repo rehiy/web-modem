@@ -26,7 +26,7 @@ func main() {
     api.HandleFunc("/modem/at", handlers.SendATCommand).Methods("POST")
     api.HandleFunc("/modem/info", handlers.GetModemInfo).Methods("GET")
     api.HandleFunc("/modem/signal", handlers.GetSignalStrength).Methods("GET")
-    
+
     // 短信读写路由
     api.HandleFunc("/modem/sms/list", handlers.ListSMS).Methods("GET")
     api.HandleFunc("/modem/sms/send", handlers.SendSMS).Methods("POST")

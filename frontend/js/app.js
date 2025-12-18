@@ -158,10 +158,10 @@ class ModemManager {
 
     async deleteSMS(index) {
         if (!confirm('确定要删除这条短信吗？')) return;
-        
+
         const port = this.getSelectedPort();
         if (!port) return;
-        
+
         try {
             this.logger(`正在删除短信 (Index: ${index})...`);
             await this.apiRequest('/modem/sms/delete', 'POST', { port, index });
