@@ -32,28 +32,6 @@ func GetSerialManager() *SerialManager {
 	return managerInstance
 }
 
-// ListPorts 列出可用串口及连接状态。
-func (m *SerialManager) ListPorts() ([]models.SerialPort, error) {
-	usbPorts, _ := filepath.Glob("/dev/ttyUSB*")
-	acmPorts, _ := filepath.Glob("/dev/ttyACM*")
-	ports := append(usbPorts, acmPorts...)
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	var serialPorts []models.SerialPort
-	for _, port := range ports {
-		_, connected := m.services[port]
-		serialPorts = append(serialPorts, models.SerialPort{
-			Name:      port,
-			Path:      port,
-			Connected: connected,
-		})
-	}
-
-	return serialPorts, nil
-}
-
 // ScanAndConnectAll 扫描并连接支持 AT 的 modem，返回已连接端口列表。
 func (m *SerialManager) ScanAndConnectAll(baudRate int) ([]models.SerialPort, error) {
 	m.mu.Lock()
