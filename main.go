@@ -23,16 +23,19 @@ func main() {
 
     // 调制解调器路由
     api.HandleFunc("/modems", handlers.ListModems).Methods("GET")
-    api.HandleFunc("/modem/send", handlers.SendATCommand).Methods("POST")
+    api.HandleFunc("/modem/at", handlers.SendATCommand).Methods("POST")
     api.HandleFunc("/modem/info", handlers.GetModemInfo).Methods("GET")
     api.HandleFunc("/modem/signal", handlers.GetSignalStrength).Methods("GET")
     
-    // 短信路由
+    // 短信读写路由
     api.HandleFunc("/modem/sms/list", handlers.ListSMS).Methods("GET")
     api.HandleFunc("/modem/sms/send", handlers.SendSMS).Methods("POST")
+    api.HandleFunc("/modem/sms/delete", handlers.DeleteSMS).Methods("POST")
 
-    // WebSocket 和静态文件
+    // WebSocket
     r.HandleFunc("/ws", handlers.HandleWebSocket)
+
+    // 静态文件服务
     r.PathPrefix("/").Handler(http.FileServer(http.Dir("frontend")))
 
     // 启动服务器

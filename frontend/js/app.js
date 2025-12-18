@@ -91,7 +91,7 @@ class ModemManager {
             return;
         }
         try {
-            const result = await this.apiRequest('/modem/send', 'POST', { port, command });
+            const result = await this.apiRequest('/modem/at', 'POST', { port, command });
             this.addToTerminal(`> ${command}`);
             this.addToTerminal(result.response || '');
             $('#atCommand').value = '';
@@ -153,6 +153,22 @@ class ModemManager {
             this.updateSMSCounter();
         } catch (error) {
             console.error('发送短信失败:', error);
+        }
+    }
+
+    async deleteSMS(index) {
+        if (!confirm('确定要删除这条短信吗？')) return;
+        
+        const port = this.getSelectedPort();
+        if (!port) return;
+        
+        try {
+            this.logger(`正在删除短信 (Index: ${index})...`);
+            await this.apiRequest('/modem/sms/delete', 'POST', { port, index });
+            this.logger('短信删除成功！', 'success');
+            this.listSMS(); // 刷新列表
+        } catch (error) {
+            console.error('删除短信失败:', error);
         }
     }
 

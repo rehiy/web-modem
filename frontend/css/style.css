@@ -178,6 +178,17 @@ main {
     line-height: 1.6;
 }
 
+.delete-btn {
+    background: #ff4444;
+    padding: 4px 8px;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.delete-btn:hover {
+    background: #cc0000;
+}
+
 .log,
 .terminal {
     background: #1e1e1e;

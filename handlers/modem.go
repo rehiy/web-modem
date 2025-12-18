@@ -86,6 +86,26 @@ func SendSMS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteSMS 删除短信
+func DeleteSMS(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Port  string `json:"port"`
+		Index int    `json:"index"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request")
+		return
+	}
+
+	if svc := getService(w, req.Port); svc != nil {
+		if err := svc.DeleteSMS(req.Index); err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+		} else {
+			respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+		}
+	}
+}
+
 // 辅助函数
 
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {

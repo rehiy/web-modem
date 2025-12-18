@@ -21,6 +21,7 @@ const (
 	cmdTextMode     = "AT+CMGF=1"
 	cmdCheck        = "AT"
 	cmdListSMS      = "AT+CMGL=\"ALL\""
+	cmdDeleteSMS    = "AT+CMGD=%d"
 	cmdSendSMS      = "AT+CMGS=\"%s\""
 	cmdSignal       = "AT+CSQ"
 	cmdManufacturer = "AT+CGMI"
@@ -262,6 +263,14 @@ func (s *SerialService) SendSMS(number, message string) error {
 	_, err := s.sendRawCommand(message, "\x1A") // \x1A 是 Ctrl+Z
 	return err
 }
+
+// DeleteSMS 删除指定索引的短信。
+func (s *SerialService) DeleteSMS(index int) error {
+	_, err := s.SendATCommand(fmt.Sprintf(cmdDeleteSMS, index))
+	return err
+}
+
+// 辅助函数
 
 func extractValue(response string) string {
 	for _, line := range strings.Split(response, "\n") {

@@ -74,6 +74,7 @@
                         <div class="sms-header">
                             <span class="sms-number">📱 {sms.number}</span>
                             <span class="sms-time">🕐 {sms.time}</span>
+                            <button class="delete-btn" onclick="app.deleteSMS({sms.index})">删除</button>
                         </div>
                         <div class="sms-message">{sms.message}</div>
                     </div>
