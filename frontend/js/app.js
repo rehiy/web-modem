@@ -17,7 +17,7 @@ class ModemManager {
         this.setupSMSCounter();
     }
 
-    // ---------- API ----------
+    // ---------- API 接口 ----------
 
     async apiRequest(endpoint, method = 'GET', body = null) {
         if (this.isBusy) {
@@ -42,7 +42,7 @@ class ModemManager {
         }
     }
 
-    // ---------- WebSocket ----------
+    // ---------- WebSocket 连接 ----------
 
     setupWebSocket() {
         this.ws = new WebSocket(`ws://${location.host}/ws`);
@@ -55,7 +55,7 @@ class ModemManager {
         };
     }
 
-    // ---------- Port & actions ----------
+    // ---------- 端口与操作 ----------
 
     async refreshPorts() {
         try {
@@ -156,7 +156,7 @@ class ModemManager {
         }
     }
 
-    // ---------- SMS counter ----------
+    // ---------- 短信计数器 ----------
 
     setupSMSCounter() {
         const textarea = $('#smsMessage');
@@ -192,7 +192,7 @@ class ModemManager {
         }
     }
 
-    // ---------- UI helpers ----------
+    // ---------- UI 辅助函数 ----------
 
     escapeHtml(text) {
         const div = $$$('div');
@@ -234,7 +234,7 @@ class ModemManager {
         $('#log').innerHTML = '';
     }
 
-    // ---------- Render ----------
+    // ---------- 渲染 ----------
 
     createTemplate() {
         this.templates.modemInfo = $('#modemInfo')?.innerHTML || '';

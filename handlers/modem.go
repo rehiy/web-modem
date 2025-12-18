@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"modem-manager/models"
+	"modem-manager/modem"
 	"modem-manager/services"
 )
 
 var serialManager = services.GetSerialManager()
 
-// ListModems returns a list of available modems
+// ListModems 返回可用调制解调器的列表
 func ListModems(w http.ResponseWriter, r *http.Request) {
 	if ports, err := serialManager.Scan(115200); err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
@@ -19,9 +19,9 @@ func ListModems(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SendATCommand sends a raw AT command to the modem
+// SendATCommand 向调制解调器发送原始 AT 命令
 func SendATCommand(w http.ResponseWriter, r *http.Request) {
-	var cmd models.ATCommand
+	var cmd modem.ATCommand
 	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request")
 		return
@@ -36,7 +36,7 @@ func SendATCommand(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetModemInfo retrieves detailed information about the modem
+// GetModemInfo 获取有关调制解调器的详细信息
 func GetModemInfo(w http.ResponseWriter, r *http.Request) {
 	if svc := getService(w, r.URL.Query().Get("port")); svc != nil {
 		if info, err := svc.GetModemInfo(); err != nil {
@@ -47,7 +47,7 @@ func GetModemInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetSignalStrength retrieves the current signal strength
+// GetSignalStrength 获取当前信号强度
 func GetSignalStrength(w http.ResponseWriter, r *http.Request) {
 	if svc := getService(w, r.URL.Query().Get("port")); svc != nil {
 		if signal, err := svc.GetSignalStrength(); err != nil {
@@ -58,7 +58,7 @@ func GetSignalStrength(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ListSMS retrieves all SMS messages from the modem
+// ListSMS 获取调制解调器中的所有短信
 func ListSMS(w http.ResponseWriter, r *http.Request) {
 	if svc := getService(w, r.URL.Query().Get("port")); svc != nil {
 		if list, err := svc.ListSMS(); err != nil {
@@ -69,9 +69,9 @@ func ListSMS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SendSMS sends an SMS message
+// SendSMS 发送短信
 func SendSMS(w http.ResponseWriter, r *http.Request) {
-	var req models.SendSMSRequest
+	var req modem.SendSMSRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request")
 		return
@@ -86,7 +86,7 @@ func SendSMS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Helper functions
+// 辅助函数
 
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
@@ -98,7 +98,7 @@ func respondError(w http.ResponseWriter, status int, msg string) {
 	respondJSON(w, status, map[string]string{"error": msg})
 }
 
-func getService(w http.ResponseWriter, port string) *services.SerialService {
+func getService(w http.ResponseWriter, port string) *modem.SerialService {
 	if port == "" {
 		respondError(w, http.StatusBadRequest, "port is required")
 		return nil

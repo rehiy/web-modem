@@ -17,25 +17,25 @@ const (
 )
 
 func main() {
-    // Initialize router
+    // 初始化路由器
     r := mux.NewRouter()
     api := r.PathPrefix(apiPrefix).Subrouter()
 
-    // Modem routes
+    // 调制解调器路由
     api.HandleFunc("/modems", handlers.ListModems).Methods("GET")
     api.HandleFunc("/modem/send", handlers.SendATCommand).Methods("POST")
     api.HandleFunc("/modem/info", handlers.GetModemInfo).Methods("GET")
     api.HandleFunc("/modem/signal", handlers.GetSignalStrength).Methods("GET")
     
-    // SMS routes
+    // 短信路由
     api.HandleFunc("/modem/sms/list", handlers.ListSMS).Methods("GET")
     api.HandleFunc("/modem/sms/send", handlers.SendSMS).Methods("POST")
 
-    // WebSocket and Static files
+    // WebSocket 和静态文件
     r.HandleFunc("/ws", handlers.HandleWebSocket)
     r.PathPrefix("/").Handler(http.FileServer(http.Dir("frontend")))
 
-    // Start server
+    // 启动服务器
     port := os.Getenv("PORT")
     if port == "" {
         port = defaultPort

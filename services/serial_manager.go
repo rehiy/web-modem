@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"modem-manager/models"
+	"modem-manager/modem"
 )
 
 var (
@@ -13,47 +13,47 @@ var (
 	managerInstance *SerialManager
 )
 
-// SerialManager manages multiple serial connections.
+// SerialManager 管理多个串口连接。
 type SerialManager struct {
-	pool map[string]*SerialService
+	pool map[string]*modem.SerialService
 	mu   sync.Mutex
 }
 
-// GetSerialManager returns the singleton instance of SerialManager.
+// GetSerialManager 返回 SerialManager 的单例实例。
 func GetSerialManager() *SerialManager {
 	managerOnce.Do(func() {
 		managerInstance = &SerialManager{
-			pool: make(map[string]*SerialService),
+			pool: make(map[string]*modem.SerialService),
 		}
 	})
 	return managerInstance
 }
 
-// Scan scans for available modems and connects to them.
-// It looks for devices matching /dev/ttyUSB* and /dev/ttyACM*.
-func (m *SerialManager) Scan(baudRate int) ([]models.SerialPort, error) {
+// Scan 扫描可用的调制解调器并连接到它们。
+// 它查找匹配 /dev/ttyUSB* 和 /dev/ttyACM* 的设备。
+func (m *SerialManager) Scan(baudRate int) ([]modem.SerialPort, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Find potential devices
+	// 查找潜在设备
 	usb, _ := filepath.Glob("/dev/ttyUSB*")
 	acm, _ := filepath.Glob("/dev/ttyACM*")
-	candidates := append(usb, acm...)
 	
-	// Try to connect to new devices
-	for _, p := range candidates {
+	// 尝试连接到新设备
+	for _, p := range append(usb, acm...) {
 		if _, exists := m.pool[p]; !exists {
-			if svc, err := NewSerialService(p, baudRate); err == nil {
+			broadcast := GetEventListener().Broadcast
+			if svc, err := modem.NewSerialService(p, baudRate, broadcast); err == nil {
 				m.pool[p] = svc
 				svc.Start()
 			}
 		}
 	}
 
-	// Build result list from active connections
-	var result []models.SerialPort
+	// 从活动连接构建结果列表
+	var result []modem.SerialPort
 	for name := range m.pool {
-		result = append(result, models.SerialPort{
+		result = append(result, modem.SerialPort{
 			Name:      name,
 			Path:      name,
 			Connected: true,
@@ -62,8 +62,8 @@ func (m *SerialManager) Scan(baudRate int) ([]models.SerialPort, error) {
 	return result, nil
 }
 
-// GetService returns the SerialService for a given port name.
-func (m *SerialManager) GetService(name string) (*SerialService, error) {
+// GetService 返回给定端口名称的 SerialService。
+func (m *SerialManager) GetService(name string) (*modem.SerialService, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

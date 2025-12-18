@@ -1,4 +1,4 @@
-package services
+package modem
 
 import (
 	"encoding/hex"
@@ -13,12 +13,10 @@ import (
 	"unicode/utf16"
 
 	"github.com/tarm/serial"
-
-	"modem-manager/models"
 )
 
 const (
-	// AT Commands
+	// AT 命令
 	cmdEchoOff      = "ATE0"
 	cmdTextMode     = "AT+CMGF=1"
 	cmdCheck        = "AT"
@@ -32,21 +30,22 @@ const (
 	cmdOperator     = "AT+COPS?"
 	cmdNumber       = "AT+CNUM"
 	
-	// Timeouts and Delays
+	// 超时和延迟
 	readTimeout     = 100 * time.Millisecond
 	errorSleep      = 100 * time.Millisecond
 	bufferSize      = 128
 )
 
-// SerialService encapsulates reading, writing, and monitoring of a single serial port.
+// SerialService 封装了单个串口的读取、写入和监控。
 type SerialService struct {
-	name string
-	port *serial.Port
+	name         string
+	port         *serial.Port
+	broadcast    func(string)
 	sync.Mutex
 }
 
-// NewSerialService attempts to connect and initialize the serial service.
-func NewSerialService(name string, baudRate int) (*SerialService, error) {
+// NewSerialService 尝试连接并初始化串口服务。
+func NewSerialService(name string, baudRate int, broadcast func(string)) (*SerialService, error) {
 	port, err := serial.OpenPort(&serial.Config{
 		Name: name, Baud: baudRate, ReadTimeout: readTimeout,
 	})
@@ -54,7 +53,7 @@ func NewSerialService(name string, baudRate int) (*SerialService, error) {
 		return nil, err
 	}
 
-	s := &SerialService{name: name, port: port}
+	s := &SerialService{name: name, port: port, broadcast: broadcast}
 	if err := s.check(); err != nil {
 		port.Close()
 		return nil, err
@@ -62,7 +61,7 @@ func NewSerialService(name string, baudRate int) (*SerialService, error) {
 	return s, nil
 }
 
-// check sends a basic AT command to verify the connection.
+// check 发送基本的 AT 命令以验证连接。
 func (s *SerialService) check() error {
 	resp, err := s.SendATCommand(cmdCheck)
 	if err != nil {
@@ -74,14 +73,14 @@ func (s *SerialService) check() error {
 	return nil
 }
 
-// Start begins the serial service read loop.
+// Start 开始串口服务读取循环。
 func (s *SerialService) Start() {
-	s.SendATCommand(cmdEchoOff)  // Turn off echo
-	s.SendATCommand(cmdTextMode) // Set text mode
+	s.SendATCommand(cmdEchoOff)  // 关闭回显
+	s.SendATCommand(cmdTextMode) // 设置文本模式
 	go s.readLoop()
 }
 
-// readLoop continuously reads serial output and broadcasts it.
+// readLoop 持续读取串口输出并广播它。
 func (s *SerialService) readLoop() {
 	buf := make([]byte, bufferSize)
 	for {
@@ -89,8 +88,8 @@ func (s *SerialService) readLoop() {
 		n, err := s.port.Read(buf)
 		s.Unlock()
 		
-		if n > 0 {
-			GetEventListener().Broadcast(fmt.Sprintf("[%s] %s", s.name, string(buf[:n])))
+		if n > 0 && s.broadcast != nil {
+			s.broadcast(fmt.Sprintf("[%s] %s", s.name, string(buf[:n])))
 		}
 		
 		if err != nil {
@@ -99,12 +98,12 @@ func (s *SerialService) readLoop() {
 	}
 }
 
-// SendATCommand sends an AT command and reads the response.
+// SendATCommand 发送 AT 命令并读取响应。
 func (s *SerialService) SendATCommand(command string) (string, error) {
 	return s.sendRawCommand(command, "\r\n")
 }
 
-// sendRawCommand sends a raw command and reads the response.
+// sendRawCommand 发送原始命令并读取响应。
 func (s *SerialService) sendRawCommand(command, suffix string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -133,9 +132,9 @@ func (s *SerialService) sendRawCommand(command, suffix string) (string, error) {
 	}
 }
 
-// GetModemInfo retrieves basic information about the current port.
-func (s *SerialService) GetModemInfo() (*models.ModemInfo, error) {
-	info := &models.ModemInfo{Port: s.name, Connected: true}
+// GetModemInfo 获取有关当前端口的基本信息。
+func (s *SerialService) GetModemInfo() (*ModemInfo, error) {
+	info := &ModemInfo{Port: s.name, Connected: true}
 	cmds := map[*string]string{
 		&info.Manufacturer: cmdManufacturer,
 		&info.Model:        cmdModel,
@@ -157,7 +156,7 @@ func (s *SerialService) GetModemInfo() (*models.ModemInfo, error) {
 	return info, nil
 }
 
-// GetPhoneNumber queries the phone number.
+// GetPhoneNumber 查询电话号码。
 func (s *SerialService) GetPhoneNumber() (string, error) {
 	resp, err := s.SendATCommand(cmdNumber)
 	if err != nil {
@@ -169,8 +168,8 @@ func (s *SerialService) GetPhoneNumber() (string, error) {
 	return "", errors.New("not found")
 }
 
-// GetSignalStrength queries the signal strength.
-func (s *SerialService) GetSignalStrength() (*models.SignalStrength, error) {
+// GetSignalStrength 查询信号强度。
+func (s *SerialService) GetSignalStrength() (*SignalStrength, error) {
 	resp, err := s.SendATCommand(cmdSignal)
 	if err != nil {
 		return nil, err
@@ -181,38 +180,38 @@ func (s *SerialService) GetSignalStrength() (*models.SignalStrength, error) {
 		return nil, err
 	}
 	
-	return &models.SignalStrength{
+	return &SignalStrength{
 		RSSI:    rssi,
 		Quality: qual,
 		DBM:     fmt.Sprintf("%d dBm", -113+rssi*2),
 	}, nil
 }
 
-// ListSMS retrieves the list of SMS messages.
-func (s *SerialService) ListSMS() ([]models.SMS, error) {
+// ListSMS 获取短信列表。
+func (s *SerialService) ListSMS() ([]SMS, error) {
 	resp, err := s.SendATCommand(cmdListSMS)
 	if err != nil {
 		return nil, err
 	}
 
-	var parts []struct { models.SMS; ref, total, seq int }
+	var parts []struct { SMS; ref, total, seq int }
 	
-	// Split by +CMGL: to handle multiple messages
+	// 按 +CMGL: 分割以处理多条消息
 	chunks := strings.Split(resp, "+CMGL: ")
-	for _, chunk := range chunks[1:] { // Skip first empty part
+	for _, chunk := range chunks[1:] { // 跳过第一个空部分
 		lines := strings.SplitN(chunk, "\n", 2)
 		if len(lines) < 2 { continue }
 		
 		meta, content := lines[0], strings.TrimSpace(strings.TrimSuffix(lines[1], "OK"))
-		// Parse meta: index,"status","oa",,"scts"
+		// 解析元数据: index,"status","oa",,"scts"
 		fields := strings.Split(meta, ",")
 		if len(fields) < 5 { continue }
 		
 		idx, _ := strconv.Atoi(strings.TrimSpace(fields[0]))
 		txt, ref, tot, seq := decodeHexSMS(content)
 		
-		parts = append(parts, struct{ models.SMS; ref, total, seq int }{
-			SMS: models.SMS{
+		parts = append(parts, struct{ SMS; ref, total, seq int }{
+			SMS: SMS{
 				Index:   idx,
 				Status:  strings.Trim(fields[1], `"`),
 				Number:  strings.Trim(fields[2], `"`),
@@ -223,9 +222,9 @@ func (s *SerialService) ListSMS() ([]models.SMS, error) {
 		})
 	}
 
-	// Merge long SMS
+	// 合并长短信
 	merged := make(map[string][]struct{ seq int; msg string })
-	var result []models.SMS
+	var result []SMS
 	
 	for _, p := range parts {
 		if p.total <= 1 {
@@ -241,7 +240,7 @@ func (s *SerialService) ListSMS() ([]models.SMS, error) {
 		fullMsg := ""
 		for _, f := range fragments { fullMsg += f.msg }
 		
-		// Find original metadata from parts (inefficient but simple)
+		// 从部分中查找原始元数据（效率低但简单）
 		for _, p := range parts {
 			if fmt.Sprintf("%s_%d", p.Number, p.ref) == key && p.seq == 1 {
 				p.SMS.Message = fullMsg
@@ -255,12 +254,12 @@ func (s *SerialService) ListSMS() ([]models.SMS, error) {
 	return result, nil
 }
 
-// SendSMS sends an SMS message.
+// SendSMS 发送短信。
 func (s *SerialService) SendSMS(number, message string) error {
 	if _, err := s.SendATCommand(fmt.Sprintf(cmdSendSMS, number)); err != nil {
 		return err
 	}
-	_, err := s.sendRawCommand(message, "\x1A") // \x1A is Ctrl+Z
+	_, err := s.sendRawCommand(message, "\x1A") // \x1A 是 Ctrl+Z
 	return err
 }
 
@@ -288,18 +287,18 @@ func decodeHexSMS(content string) (string, int, int, int) {
 
 	offset, ref, total, seq := 0, 0, 1, 1
 	
-	// Check for Concatenated SMS UDH (User Data Header)
-	// 05 00 03 [ref] [total] [seq]
+	// 检查级联短信 UDH（用户数据头）
+	// 05 00 03 [引用] [总数] [序号]
 	if len(b) > 6 && b[0] == 5 && b[1] == 0 && b[2] == 3 {
 		offset, ref, total, seq = 6, int(b[3]), int(b[4]), int(b[5])
 	} else if len(b) > 7 && b[0] == 6 && b[1] == 8 && b[2] == 4 {
-		// 06 08 04 [ref1] [ref2] [total] [seq]
+		// 06 08 04 [引用1] [引用2] [总数] [序号]
 		offset, ref, total, seq = 7, int(b[3])<<8|int(b[4]), int(b[5]), int(b[6])
 	}
 
 	if (len(b)-offset)%2 != 0 { return content, 0, 1, 1 }
 	
-	// Decode UTF-16BE
+	// 解码 UTF-16BE
 	u16 := make([]uint16, (len(b)-offset)/2)
 	for i := range u16 {
 		u16[i] = uint16(b[offset+i*2])<<8 | uint16(b[offset+i*2+1])

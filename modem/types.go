@@ -1,4 +1,4 @@
-package models
+package modem
 
 type ModemInfo struct {
 	Port         string `json:"port"`
