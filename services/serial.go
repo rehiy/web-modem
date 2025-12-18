@@ -1,18 +1,19 @@
 package services
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf16"
 
 	"github.com/tarm/serial"
 
 	"modem-manager/models"
-	"modem-manager/utils"
 )
 
 // SerialService 封装单个串口的读写与监听。
@@ -22,8 +23,52 @@ type SerialService struct {
 	mu   *sync.Mutex
 }
 
-func newSerialService(name string, port *serial.Port) *SerialService {
-	return &SerialService{name, port, &sync.Mutex{}}
+// NewSerialService 尝试连接并初始化串口服务
+func NewSerialService(name string, baudRate int) (*SerialService, error) {
+	cfg := &serial.Config{
+		Name:        name,
+		Baud:        baudRate,
+		ReadTimeout: 2 * time.Second,
+		Size:        8,
+		Parity:      serial.ParityNone,
+		StopBits:    serial.Stop1,
+	}
+
+	port, err := serial.OpenPort(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// 初始化 Modem
+	s := &SerialService{name: name, port: port, mu: &sync.Mutex{}}
+	if err := s.check(); err != nil {
+		port.Close()
+		return nil, err
+	}
+
+	return s, nil
+}
+
+// check 发送基本 AT 命令以验证连接。
+func (s *SerialService) check() error {
+	resp, err := s.SendATCommand("AT")
+	if err != nil {
+		return err
+	}
+	if !strings.Contains(resp, "OK") {
+		return fmt.Errorf("command AT failed: %s", resp)
+	}
+	return nil
+}
+
+// Start 启动串口服务的读取循环。
+func (s *SerialService) Start() {
+	// 关闭回显
+	s.SendATCommand("ATE0")
+	// 设置文本模式
+	s.SendATCommand("AT+CMGF=1")
+	// 启动读取循环
+	go s.readLoop()
 }
 
 // readLoop 持续读取串口输出并广播。
@@ -38,7 +83,7 @@ func (s *SerialService) readLoop() {
 			continue
 		}
 		if n > 0 {
-			GetGlobalListener().broadcast("[" + s.name + "] " + string(buf[:n]))
+			GetEventListener().Broadcast("[" + s.name + "] " + string(buf[:n]))
 		}
 	}
 }
@@ -125,16 +170,17 @@ func (s *SerialService) GetModemInfo() (*models.ModemInfo, error) {
 	if resp, err := s.SendATCommand("AT+CIMI"); err == nil {
 		info.IMSI = extractValue(resp)
 	}
-	if resp, err := s.GetPhoneNumber(); err == nil {
-		info.PhoneNumber = resp
-	}
 	if resp, err := s.SendATCommand("AT+COPS?"); err == nil {
 		info.Operator = extractOperator(resp)
 	}
+	if resp, err := s.GetPhoneNumber(); err == nil {
+		info.PhoneNumber = resp
+	}
 
 	return info, nil
-}                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+}
 
+// GetPhoneNumber 查询电话号码。
 func (s *SerialService) GetPhoneNumber() (string, error) {
 	resp, err := s.SendATCommand("AT+CNUM")
 	if err != nil {
@@ -184,77 +230,136 @@ func (s *SerialService) GetSignalStrength() (*models.SignalStrength, error) {
 	return &models.SignalStrength{RSSI: rssi, Quality: quality, DBM: dbm}, nil
 }
 
-// ListSMS 列出当前端口的短信（PDU 模式）。
+// ListSMS 获取短信列表
 func (s *SerialService) ListSMS() ([]models.SMS, error) {
-	resp, err := s.SendATCommand("AT+CMGL=4")
+	// 获取所有短信
+	resp, err := s.SendATCommand("AT+CMGL=\"ALL\"")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("获取短信失败: %v", err)
 	}
-	return s.parsePDUSMSList(resp), nil
-}
 
-// parsePDUSMSList 解析 PDU 模式下的短信列表。
-func (s *SerialService) parsePDUSMSList(response string) []models.SMS {
-	smsList := []models.SMS{}
-	lines := strings.Split(response, "\n")
+	var smsList []models.SMS
+	lines := strings.Split(resp, "\n")
+
+	// 正则表达式匹配 +CMGL: index,status,oa,alpha,scts
+	// 例如: +CMGL: 1,"REC READ","+8613800138000",,"23/12/18,10:00:00+32"
+	re := regexp.MustCompile(`\+CMGL:\s*(\d+),"([^"]*)","([^"]*)",(?:[^,]*,)?"([^"]*)"`)
+
+	// 临时存储所有短信分片
+	type smsPart struct {
+		models.SMS
+		Ref   int
+		Total int
+		Seq   int
+	}
+	var allParts []smsPart
 
 	for i := 0; i < len(lines); i++ {
 		line := strings.TrimSpace(lines[i])
-		if strings.HasPrefix(line, "+CMGL:") {
-			re := regexp.MustCompile(`\+CMGL:\s*(\d+),(\d+),.*,(\d+)`)
-			matches := re.FindStringSubmatch(line)
+		if line == "" {
+			continue
+		}
 
-			if len(matches) >= 3 && i+1 < len(lines) {
-				index := 0
-				fmt.Sscanf(matches[1], "%d", &index)
+		matches := re.FindStringSubmatch(line)
+		if len(matches) >= 5 {
+			index := 0
+			fmt.Sscanf(matches[1], "%d", &index)
 
-				pduData := strings.TrimSpace(lines[i+1])
-				phone, message, timestamp, err := utils.ParsePDUMessage(pduData)
-				if err != nil {
-					log.Println("PDU parse error:", err)
-					continue
+			// 读取短信内容
+			content := ""
+			for j := i + 1; j < len(lines); j++ {
+				nextLine := strings.TrimSpace(lines[j])
+				// 如果遇到下一个 +CMGL 或 OK，则停止
+				if strings.HasPrefix(nextLine, "+CMGL:") || nextLine == "OK" {
+					i = j - 1
+					break
 				}
-
-				sms := models.SMS{Index: index, Status: "READ", Number: phone, Time: timestamp, Message: message}
-				smsList = append(smsList, sms)
-				i++
+				if content != "" {
+					content += "\n"
+				}
+				content += nextLine
+				// 如果是最后一行，更新 i
+				if j == len(lines)-1 {
+					i = j
+				}
 			}
+
+			text, ref, total, seq := decodeHexSMS(content)
+
+			allParts = append(allParts, smsPart{
+				SMS: models.SMS{
+					Index:   index,
+					Status:  matches[2],
+					Number:  matches[3],
+					Time:    matches[4],
+					Message: text,
+				},
+				Ref:   ref,
+				Total: total,
+				Seq:   seq,
+			})
 		}
 	}
 
-	return smsList
+	// 合并长短信
+	longSMSMap := make(map[string][]smsPart)
+	for _, p := range allParts {
+		if p.Total <= 1 {
+			smsList = append(smsList, p.SMS)
+		} else {
+			key := fmt.Sprintf("%s_%d", p.Number, p.Ref)
+			longSMSMap[key] = append(longSMSMap[key], p)
+		}
+	}
+
+	for _, parts := range longSMSMap {
+		// 按序号排序
+		sort.Slice(parts, func(i, j int) bool {
+			return parts[i].Seq < parts[j].Seq
+		})
+
+		// 拼接内容
+		fullMsg := ""
+		for _, part := range parts {
+			fullMsg += part.Message
+		}
+
+		// 使用第一条分片的信息作为合并后的短信信息
+		combined := parts[0].SMS
+		combined.Message = fullMsg
+		smsList = append(smsList, combined)
+	}
+
+	// 按索引排序
+	sort.Slice(smsList, func(i, j int) bool {
+		return smsList[i].Index < smsList[j].Index
+	})
+
+	return smsList, nil
 }
 
-// SendSMS 发送短信（支持长短信、中文）。
+// SendSMS 发送短信
 func (s *SerialService) SendSMS(number, message string) error {
-	pdus := utils.CreatePDUMessage(number, message)
-	log.Printf("Sending SMS in %d part(s)", len(pdus))
-
-	for i, pdu := range pdus {
-		log.Printf("Sending part %d/%d", i+1, len(pdus))
-
-		pduLen := (len(pdu) - 2) / 2
-		cmd := fmt.Sprintf("AT+CMGS=%d", pduLen)
-		resp, err := s.SendATCommand(cmd)
-		if err != nil {
-			return fmt.Errorf("failed to initiate SMS: %v", err)
-		}
-
-		if !strings.Contains(resp, ">") {
-			return errors.New("modem did not respond with prompt")
-		}
-
-		time.Sleep(200 * time.Millisecond)
-
-		_, err = s.sendRawCommand(pdu, "\x1A")
-		if err != nil {
-			return fmt.Errorf("failed to send PDU: %v", err)
-		}
-
-		time.Sleep(2 * time.Second)
+	// 直接发送短信命令
+	cmd := fmt.Sprintf("AT+CMGS=\"%s\"", number)
+	resp, err := s.SendATCommand(cmd)
+	if err != nil {
+		return err
 	}
 
-	log.Println("SMS sent successfully")
+	// 检查是否收到提示符
+	if !strings.Contains(resp, ">") {
+		return fmt.Errorf("未收到发送提示符")
+	}
+
+	// 发送消息内容并以Ctrl+Z结束
+	_, err = s.sendRawCommand(message, "\x1A")
+	if err != nil {
+		return err
+	}
+
+	// 简单等待发送完成
+	time.Sleep(2 * time.Second)
 	return nil
 }
 
@@ -276,4 +381,71 @@ func extractOperator(response string) string {
 		return matches[1]
 	}
 	return ""
+}
+
+// decodeHexSMS 尝试解码可能是 Hex 格式的短信内容
+// 自动处理 UDH 头和 UCS2 编码
+// 返回: 解码后的内容, 引用号, 总分片数, 当前分片序号
+func decodeHexSMS(content string) (string, int, int, int) {
+	// 移除可能的空白字符
+	cleanContent := strings.TrimSpace(content)
+
+	// 检查是否全是 Hex 字符且长度为偶数
+	if len(cleanContent) == 0 || len(cleanContent)%2 != 0 {
+		return content, 0, 1, 1
+	}
+	for _, c := range cleanContent {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return content, 0, 1, 1
+		}
+	}
+
+	// 尝试 Hex Decode
+	bytes, err := hex.DecodeString(cleanContent)
+	if err != nil {
+		return content, 0, 1, 1
+	}
+
+	// 检查是否有 UDH (User Data Header)
+	// 常见的长短信 UDH:
+	// 05 00 03 ref total seq (6 bytes)
+	// 06 08 04 ref ref total seq (7 bytes)
+	offset := 0
+	ref := 0
+	total := 1
+	seq := 1
+
+	if len(bytes) > 6 && bytes[0] == 0x05 && bytes[1] == 0x00 && bytes[2] == 0x03 {
+		offset = 6
+		ref = int(bytes[3])
+		total = int(bytes[4])
+		seq = int(bytes[5])
+	} else if len(bytes) > 7 && bytes[0] == 0x06 && bytes[1] == 0x08 && bytes[2] == 0x04 {
+		offset = 7
+		ref = int(bytes[3])<<8 | int(bytes[4])
+		total = int(bytes[5])
+		seq = int(bytes[6])
+	}
+
+	// 剩下的字节尝试 UCS2 (UTF-16BE) 解码
+	if (len(bytes)-offset)%2 != 0 {
+		// 长度不对，可能不是 UCS2
+		return content, 0, 1, 1
+	}
+
+	utf16Codes := make([]uint16, (len(bytes)-offset)/2)
+	for i := 0; i < len(utf16Codes); i++ {
+		idx := offset + i*2
+		utf16Codes[i] = uint16(bytes[idx])<<8 | uint16(bytes[idx+1])
+	}
+
+	// 解码 UTF-16
+	decoded := string(utf16.Decode(utf16Codes))
+
+	// 如果解码结果为空，返回原始内容
+	if decoded == "" {
+		return content, 0, 1, 1
+	}
+
+	return decoded, ref, total, seq
 }

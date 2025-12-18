@@ -23,8 +23,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	// 创建监听通道
-	global := services.GetGlobalListener()
-	ch, cancel := global.Subscribe(100)
+	ch, cancel := services.GetEventListener().Subscribe(100)
 	defer cancel()
 
 	for message := range ch {
