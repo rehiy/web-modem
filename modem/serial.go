@@ -1,8 +1,10 @@
 package modem
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,11 +14,47 @@ import (
 	"github.com/tarm/serial"
 )
 
+const (
+	// AT 命令
+	cmdCheck        = "AT"
+	cmdEchoOff      = "ATE0"
+	cmdNumber       = "AT+CNUM"
+	cmdManufacturer = "AT+CGMI"
+	cmdModel        = "AT+CGMM"
+	cmdIMEI         = "AT+CGSN"
+	cmdIMSI         = "AT+CIMI"
+	cmdSignal       = "AT+CSQ"
+	cmdOperator     = "AT+COPS?"
+	cmdPDUMode      = "AT+CMGF=0"
+	cmdListSMS      = "AT+CMGL=4"
+	cmdDeleteSMS    = "AT+CMGD=%d"
+	cmdSendSMS      = "AT+CMGS=%d"
+
+	// 特殊字符
+	eof   = "\r\n"
+	ctrlZ = "\x1A"
+
+	// 常用响应
+	respOK    = "OK"
+	respError = "ERROR"
+
+	// 延迟和超时
+	bufferSize  = 128
+	readTimeout = 100 * time.Millisecond
+	errorSleep  = 100 * time.Millisecond
+)
+
+var (
+	// 正则表达式
+	rePhoneNumber = regexp.MustCompile(`\+CNUM:.*,"([^"]+)"`)
+	reOperator    = regexp.MustCompile(`"([^"]+)"`)
+)
+
 // SerialService 封装了单个串口的读取、写入和监控。
 type SerialService struct {
-	name         string
-	port         *serial.Port
-	broadcast    func(string)
+	name      string
+	port      *serial.Port
+	broadcast func(string)
 	sync.Mutex
 }
 
@@ -51,8 +89,8 @@ func (s *SerialService) check() error {
 
 // Start 开始串口服务读取循环。
 func (s *SerialService) Start() {
-	s.SendATCommand(cmdEchoOff)  // 关闭回显
-	s.SendATCommand(cmdTextMode) // 设置文本模式
+	s.SendATCommand(cmdEchoOff) // 关闭回显
+	s.SendATCommand(cmdPDUMode) // 短信格式
 	go s.readLoop()
 }
 
@@ -95,7 +133,7 @@ func (s *SerialService) sendRawCommand(command, suffix string, timeout time.Dura
 	start := time.Now()
 	for {
 		if time.Since(start) > timeout {
-			return "", errTimeout
+			return "", errors.New("command timeout")
 		}
 
 		n, err := s.port.Read(buf)
@@ -119,6 +157,18 @@ func (s *SerialService) sendRawCommand(command, suffix string, timeout time.Dura
 	}
 }
 
+// GetPhoneNumber 查询电话号码。
+func (s *SerialService) GetPhoneNumber() (string, error) {
+	resp, err := s.SendATCommand(cmdNumber)
+	if err != nil {
+		return "", err
+	}
+	if m := rePhoneNumber.FindStringSubmatch(resp); len(m) > 1 {
+		return DecodeUCS2Hex(m[1]), nil
+	}
+	return "", errors.New("not found")
+}
+
 // GetModemInfo 获取有关当前端口的基本信息。
 func (s *SerialService) GetModemInfo() (*ModemInfo, error) {
 	info := &ModemInfo{Port: s.name, Connected: true}
@@ -136,23 +186,13 @@ func (s *SerialService) GetModemInfo() (*ModemInfo, error) {
 	}
 
 	if resp, err := s.SendATCommand(cmdOperator); err == nil {
-		info.Operator = extractOperator(resp)
+		if m := reOperator.FindStringSubmatch(resp); len(m) > 1 {
+			info.Operator = m[1]
+		}
 	}
 
 	info.PhoneNumber, _ = s.GetPhoneNumber()
 	return info, nil
-}
-
-// GetPhoneNumber 查询电话号码。
-func (s *SerialService) GetPhoneNumber() (string, error) {
-	resp, err := s.SendATCommand(cmdNumber)
-	if err != nil {
-		return "", err
-	}
-	if m := rePhoneNumber.FindStringSubmatch(resp); len(m) > 1 {
-		return DecodeUCS2Hex(m[1]), nil
-	}
-	return "", errNotFound
 }
 
 // GetSignalStrength 查询信号强度。
@@ -181,7 +221,10 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 		return nil, err
 	}
 
-	var parts []struct { SMS; ref, total, seq int }
+	var parts []struct {
+		SMS
+		ref, total, seq int
+	}
 
 	// 按 +CMGL: 分割以处理多条消息，跳过第一个空部分
 	chunks := strings.Split(resp, "+CMGL: ")
@@ -207,7 +250,10 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 			message = "PDU Decode Error: " + err.Error() + " Raw: " + pdu
 		}
 
-		parts = append(parts, struct{ SMS; ref, total, seq int }{
+		parts = append(parts, struct {
+			SMS
+			ref, total, seq int
+		}{
 			SMS: SMS{
 				Index:   idx,
 				Status:  getPDUStatus(stat),
@@ -221,7 +267,10 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 
 	// 合并长短信
 	var result []SMS
-	merged := make(map[string][]struct{ seq int; msg string })
+	merged := make(map[string][]struct {
+		seq int
+		msg string
+	})
 
 	for _, p := range parts {
 		if p.total <= 1 {
@@ -229,13 +278,18 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 			continue
 		}
 		key := fmt.Sprintf("%s_%d", p.Number, p.ref)
-		merged[key] = append(merged[key], struct{ seq int; msg string }{p.seq, p.Message})
+		merged[key] = append(merged[key], struct {
+			seq int
+			msg string
+		}{p.seq, p.Message})
 	}
 
 	for key, fragments := range merged {
 		sort.Slice(fragments, func(i, j int) bool { return fragments[i].seq < fragments[j].seq })
 		fullMsg := ""
-		for _, f := range fragments { fullMsg += f.msg }
+		for _, f := range fragments {
+			fullMsg += f.msg
+		}
 
 		// 从部分中查找原始元数据（效率低但简单）
 		for _, p := range parts {
@@ -283,13 +337,6 @@ func extractValue(response string) string {
 	return ""
 }
 
-func extractOperator(response string) string {
-	if m := reOperator.FindStringSubmatch(response); len(m) > 1 {
-		return m[1]
-	}
-	return ""
-}
-
 func getPDUStatus(stat int) string {
 	switch stat {
 	case 0:
@@ -304,4 +351,3 @@ func getPDUStatus(stat int) string {
 		return "UNKNOWN"
 	}
 }
-
