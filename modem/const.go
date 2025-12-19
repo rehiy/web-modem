@@ -9,11 +9,12 @@ import (
 const (
 	// AT 命令
 	cmdEchoOff      = "ATE0"
-	cmdTextMode     = "AT+CMGF=1"
+	cmdTextMode     = "AT+CMGF=0"
+	cmdCharSet      = "AT+CSCS=\"GSM\""
 	cmdCheck        = "AT"
-	cmdListSMS      = "AT+CMGL=\"ALL\""
+	cmdListSMS      = "AT+CMGL=4"
 	cmdDeleteSMS    = "AT+CMGD=%d"
-	cmdSendSMS      = "AT+CMGS=\"%s\""
+	cmdSendSMS      = "AT+CMGS=%d"
 	cmdSignal       = "AT+CSQ"
 	cmdManufacturer = "AT+CGMI"
 	cmdModel        = "AT+CGMM"

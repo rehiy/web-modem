@@ -1,7 +1,6 @@
 package modem
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io"
 	"sort"
@@ -9,7 +8,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode/utf16"
 
 	"github.com/tarm/serial"
 )
@@ -152,7 +150,7 @@ func (s *SerialService) GetPhoneNumber() (string, error) {
 		return "", err
 	}
 	if m := rePhoneNumber.FindStringSubmatch(resp); len(m) > 1 {
-		return m[1], nil
+		return DecodeUCS2Hex(m[1]), nil
 	}
 	return "", errNotFound
 }
@@ -189,25 +187,35 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 	chunks := strings.Split(resp, "+CMGL: ")
 	for _, chunk := range chunks[1:] {
 		lines := strings.SplitN(chunk, "\n", 2)
-		if len(lines) < 2 { continue }
+		if len(lines) < 2 {
+			continue
+		}
 
-		// 解析元数据: index,"status","oa",,"scts"
+		// 解析元数据: index,stat,,length
 		fields := strings.Split(strings.TrimSpace(lines[0]), ",")
-		if len(fields) < 5 { continue }
+		if len(fields) < 2 {
+			continue
+		}
 
 		idx, _ := strconv.Atoi(strings.TrimSpace(fields[0]))
-		content := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(lines[1]), respOK))
-		txt, ref, tot, seq := decodeHexSMS(content)
+		stat, _ := strconv.Atoi(strings.TrimSpace(fields[1]))
+		pdu := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(lines[1]), respOK))
+
+		sender, timestamp, message, ref, total, seq, err := decodePDU(pdu)
+		if err != nil {
+			// 如果解析失败，保留原始 PDU 以便调试
+			message = "PDU Decode Error: " + err.Error() + " Raw: " + pdu
+		}
 
 		parts = append(parts, struct{ SMS; ref, total, seq int }{
 			SMS: SMS{
 				Index:   idx,
-				Status:  strings.Trim(fields[1], `"`),
-				Number:  strings.Trim(fields[2], `"`),
-				Time:    strings.Trim(fields[4], `"`),
-				Message: txt,
+				Status:  getPDUStatus(stat),
+				Number:  sender,
+				Time:    timestamp,
+				Message: message,
 			},
-			ref: ref, total: tot, seq: seq,
+			ref: ref, total: total, seq: seq,
 		})
 	}
 
@@ -245,11 +253,15 @@ func (s *SerialService) ListSMS() ([]SMS, error) {
 
 // SendSMS 发送短信。
 func (s *SerialService) SendSMS(number, message string) error {
-	if _, err := s.SendATCommand(fmt.Sprintf(cmdSendSMS, number)); err != nil {
+	pdu, length, err := encodePDU(number, message)
+	if err != nil {
 		return err
 	}
-	encodedMessage := encodeUCS2(message)
-	_, err := s.sendRawCommand(encodedMessage, ctrlZ, 60*time.Second)
+
+	if _, err := s.SendATCommand(fmt.Sprintf(cmdSendSMS, length)); err != nil {
+		return err
+	}
+	_, err = s.sendRawCommand(pdu, ctrlZ, 60*time.Second)
 	return err
 }
 
@@ -278,51 +290,18 @@ func extractOperator(response string) string {
 	return ""
 }
 
-func decodeHexSMS(content string) (string, int, int, int) {
-	content = strings.TrimSpace(content)
-	b, err := hex.DecodeString(content)
-	if err != nil || len(content)%2 != 0 {
-		return content, 0, 1, 1
+func getPDUStatus(stat int) string {
+	switch stat {
+	case 0:
+		return "REC UNREAD"
+	case 1:
+		return "REC READ"
+	case 2:
+		return "STO UNSENT"
+	case 3:
+		return "STO SENT"
+	default:
+		return "UNKNOWN"
 	}
-
-	offset, ref, total, seq := 0, 0, 1, 1
-
-	// 检查级联短信 UDH（用户数据头）
-	// 05 00 03 [引用] [总数] [序号]
-	if len(b) > 6 && b[0] == 5 && b[1] == 0 && b[2] == 3 {
-		offset, ref, total, seq = 6, int(b[3]), int(b[4]), int(b[5])
-	} else if len(b) > 7 && b[0] == 6 && b[1] == 8 && b[2] == 4 {
-		// 06 08 04 [引用1] [引用2] [总数] [序号]
-		offset, ref, total, seq = 7, int(b[3])<<8|int(b[4]), int(b[5]), int(b[6])
-	}
-
-	if (len(b)-offset)%2 != 0 {
-		return content, 0, 1, 1
-	}
-
-	// 将剩余字节重新编码为 Hex ，使用 decodeUCS2Hex 解码
-	remainingHex := hex.EncodeToString(b[offset:])
-	return decodeUCS2Hex(remainingHex), ref, total, seq
 }
 
-func encodeUCS2(s string) string {
-	u16 := utf16.Encode([]rune(s))
-	var sb strings.Builder
-	for _, r := range u16 {
-		sb.WriteString(fmt.Sprintf("%04X", r))
-	}
-	return sb.String()
-}
-
-func decodeUCS2Hex(s string) string {
-	s = strings.TrimSpace(s)
-	b, err := hex.DecodeString(s)
-	if err != nil || len(b)%2 != 0 {
-		return s
-	}
-	u16 := make([]uint16, len(b)/2)
-	for i := range u16 {
-		u16[i] = uint16(b[i*2])<<8 | uint16(b[i*2+1])
-	}
-	return string(utf16.Decode(u16))
-}
