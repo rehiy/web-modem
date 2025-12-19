@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"modem-manager/modem"
-	"modem-manager/services"
+	"web-modem/modem"
+	"web-modem/services"
 )
 
 var serialManager = services.GetSerialManager()

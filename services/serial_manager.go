@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"modem-manager/modem"
+	"web-modem/modem"
 )
 
 var (
