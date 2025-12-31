@@ -3,9 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"web-modem/services"
-
 	"github.com/gorilla/websocket"
+	"github.com/rehiy/web-modem/services"
 )
 
 var upgrader = websocket.Upgrader{

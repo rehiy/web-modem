@@ -6,9 +6,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
-
-	"web-modem/handlers"
+	"github.com/rehiy/web-modem/handlers"
 )
 
 const (
@@ -45,5 +43,5 @@ func main() {
 	}
 
 	log.Printf("Server starting on :%s", port)
-	log.Fatal(http.ListenAndServe(":"+port, cors.AllowAll().Handler(r)))
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"web-modem/services"
+	"github.com/rehiy/web-modem/services"
 )
 
 type H map[string]any
