@@ -34,7 +34,7 @@ func main() {
 	r.HandleFunc("/ws", handlers.HandleWebSocket)
 
 	// 静态文件服务
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir("frontend")))
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("webview")))
 
 	// 启动服务器
 	port := os.Getenv("PORT")
