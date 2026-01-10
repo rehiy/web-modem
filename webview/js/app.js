@@ -46,7 +46,7 @@ class ModemManager {
     // ---------- WebSocket 连接 ----------
 
     setupWebSocket() {
-        this.ws = new WebSocket(`ws://${location.host}/ws`);
+        this.ws = new WebSocket(`ws://${location.host}/api/v1/modem/ws`);
         this.ws.onopen = () => this.logger('WebSocket 已连接');
         this.ws.onmessage = (event) => this.logger(event.data);
         this.ws.onerror = (error) => this.logger('WebSocket 错误: ' + error);
@@ -60,7 +60,7 @@ class ModemManager {
 
     async refreshModems() {
         try {
-            const modems = await this.apiRequest('/modems');
+            const modems = await this.apiRequest('/modem/list');
             const select = $('#modemSelect');
             const current = select.value;
             select.innerHTML = '<option value="">-- 选择串口 --</option>';
@@ -109,7 +109,7 @@ class ModemManager {
         }
 
         try {
-            const result = await this.apiRequest('/modem/at', 'POST', { name: this.name, command: cmd });
+            const result = await this.apiRequest('/modem/send', 'POST', { name: this.name, command: cmd });
             this.addToTerminal(`> ${cmd}`);
             this.addToTerminal(result.response || '');
             $('#atCommand').value = '';
