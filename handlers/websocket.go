@@ -20,12 +20,8 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// 订阅事件监听器
-	ch, cancel := services.GetEventListener().Subscribe(100)
-	defer cancel()
-
-	// 流式传输消息
-	for msg := range ch {
+	// 读取消息并推送到客户端
+	for msg := range services.EventChannel {
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
 			return
 		}

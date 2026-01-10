@@ -18,6 +18,9 @@ import (
 var (
 	managerOnce     sync.Once
 	managerInstance *ModemManager
+
+	// 用于推送串口事件到客户端
+	EventChannel = make(chan string, 100)
 )
 
 // ModemInfo 端口信息
@@ -127,10 +130,9 @@ func (m *ModemManager) makeConnect(u string) error {
 		delete(m.pool, n)
 	}
 
-	// 创建事件广播函数
-	broadcast := GetEventListener().Broadcast
+	// 创建事件处理函数，写入 EventChannel
 	hf := func(l string, p map[int]string) {
-		broadcast(fmt.Sprintf("[%s] urc:%s %v", n, l, p))
+		EventChannel <- fmt.Sprintf("[%s] urc:%s %v", n, l, p)
 	}
 
 	// 打开串口
