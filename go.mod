@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.1
-	github.com/rehiy/modem v0.0.0-20251231142717-37aa88014c9d
+	github.com/rehiy/modem v0.0.0-20260110055906-2bb8ae94067d
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 )
 
