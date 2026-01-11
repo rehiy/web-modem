@@ -1,0 +1,50 @@
+/* =========================================
+   Modem 主界面模块 (Modem Main Module)
+   功能：Modem 设备信息、信号强度显示、AT 命令终端
+   ========================================= */
+
+/* Modem 信息网格布局 - 显示设备基本信息和信号强度 */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+/* 信息项容器 */
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+/* 信息标签 */
+.info-label {
+    font-size: 0.75rem;
+    color: var(--secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* 信息值 */
+.info-value {
+    font-size: 0.875rem;
+    color: var(--dark);
+    font-weight: 600;
+}
+
+/* AT 命令终端 - 用于显示 AT 命令执行结果 */
+.terminal {
+    background: var(--dark);
+    color: #10b981;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--radius);
+    height: 300px;
+    overflow-y: auto;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+

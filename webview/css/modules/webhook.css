@@ -1,0 +1,47 @@
+/* =========================================
+   Webhook 配置模块 (Webhook Configuration Module)
+   ========================================= */
+
+/* Webhook 表格特定样式 */
+#webhookList th:nth-child(1),
+#webhookList td:nth-child(1) {
+    width: 40px;
+    text-align: center;
+}
+
+#webhookList th:nth-child(2),
+#webhookList td:nth-child(2) {
+    width: 150px;
+}
+
+#webhookList th:nth-child(3),
+#webhookList td:nth-child(3) {
+    min-width: 200px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#webhookList th:nth-child(4),
+#webhookList td:nth-child(4) {
+    width: 80px;
+    text-align: center;
+}
+
+#webhookList th:nth-child(5),
+#webhookList td:nth-child(5) {
+    width: 150px;
+}
+
+#webhookList th:nth-child(6),
+#webhookList td:nth-child(6) {
+    width: 140px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Webhook 表单特定样式 */
+#webhookTab .form-textarea {
+    min-height: 150px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}

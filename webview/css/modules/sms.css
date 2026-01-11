@@ -1,0 +1,72 @@
+/* =========================================
+   Modem 短信模块 (Modem SMS Module)
+   ========================================= */
+
+/* 短信列表容器 */
+.sms-item {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.sms-item:hover {
+    background: #f8f9fa;
+}
+
+.sms-item:last-child {
+    border-bottom: none;
+}
+
+/* 短信头部 */
+.sms-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+/* 发送方号码 */
+.sms-number {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 短信时间 */
+.sms-time {
+    font-size: 0.8rem;
+    color: var(--secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 短信内容 */
+.sms-message {
+    color: var(--dark);
+    line-height: 1.4;
+    font-size: 0.9rem;
+    word-wrap: break-word;
+    margin-bottom: 0.5rem;
+}
+
+/* 短信删除按钮 */
+.sms-header .delete-btn {
+    flex-shrink: 0;
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.sms-header .delete-btn:hover {
+    background: #dc2626;
+}

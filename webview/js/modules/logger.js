@@ -2,14 +2,14 @@
    全局日志面板组件 (Global Log Panel Component)
    ========================================= */
 
-import { $ } from '../utils/dom.js';
+import { $, escapeHtml } from '../utils/dom.js';
 
 /**
  * 全局日志面板类
  * 提供可收缩的悬浮窗日志显示功能
  */
 export class Logger {
-    
+
     /**
      * 构造函数
      */
@@ -28,6 +28,22 @@ export class Logger {
     }
 
     /**
+     * 切换收缩/展开状态
+     */
+    toggle() {
+        const panel = $('#logPanel');
+        if (this.isExpanded) {
+            panel.classList.remove('expanded');
+            panel.classList.add('collapsed');
+            this.isExpanded = false;
+        } else {
+            panel.classList.remove('collapsed');
+            panel.classList.add('expanded');
+            this.isExpanded = true;
+        }
+    }
+
+    /**
      * 记录日志
      * @param {string} text - 日志文本
      * @param {string} type - 日志类型 (info, error, success)
@@ -40,7 +56,7 @@ export class Logger {
 
         const logEntry = document.createElement('div');
         logEntry.className = `log-entry ${type}`;
-        logEntry.innerHTML = `[${timestamp}] ${prefix}${this.escapeHtml(text)}`;
+        logEntry.innerHTML = `[${timestamp}] ${prefix}${escapeHtml(text)}`;
 
         this.container.appendChild(logEntry);
         this.container.scrollTop = this.container.scrollHeight;
@@ -76,36 +92,6 @@ export class Logger {
     clear() {
         if (this.container) {
             this.container.innerHTML = '';
-            this.hideNewMessageIndicator();
         }
-    }
-
-    /**
-     * 切换收缩/展开状态
-     */
-    toggle() {
-        const panel = $('#logPanel');
-        if (this.isExpanded) {
-            panel.classList.remove('expanded');
-            panel.classList.add('collapsed');
-            this.isExpanded = false;
-        } else {
-            panel.classList.remove('collapsed');
-            panel.classList.add('expanded');
-            this.isExpanded = true;
-        }
-    }
-
-
-
-    /**
-     * HTML转义
-     * @param {string} text - 需要转义的文本
-     * @returns {string} 转义后的文本
-     */
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 }

@@ -307,7 +307,7 @@ func (w *WebhookService) HandleIncomingSMS(smsData *models.SMS) error {
 				smsForWebhook = sms
 			} else {
 				// 如果保存失败或未启用，尝试查询
-				smsList, err := database.GetSmsdbListBySMSIDs(parseSMSIDs(smsData.SMSIDs))
+				smsList, err := database.GetsmsdbBodyBySMSIDs(parseSMSIDs(smsData.SMSIDs))
 				if err != nil {
 					log.Printf("[SMS] Failed to get saved SMS: %v", err)
 					return

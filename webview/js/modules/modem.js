@@ -18,15 +18,6 @@ export class ModemManager {
     constructor() {
         this.isBusy = false;      // 操作繁忙状态标志
         this.name = null;         // 当前选中的Modem名称
-        this.init();
-    }
-
-    /**
-     * 初始化方法
-     * 执行所有必要的初始化操作
-     */
-    init() {
-        this.createTemplate();
         this.setupSMSCounter();
         this.refreshModems();
         this.setupEventListeners();
@@ -37,7 +28,6 @@ export class ModemManager {
      * 绑定所有Modem相关的UI事件
      */
     setupEventListeners() {
-        // Modem 相关事件
         $('#modemSelect')?.addEventListener('change', () => this.loadModemRelatedInfo());
         $('#refreshBtn')?.addEventListener('click', () => this.refreshModems());
         $('#getModemInfoBtn')?.addEventListener('click', () => this.getModemInfo());
@@ -135,7 +125,9 @@ export class ModemManager {
     async getModemInfo() {
         const queryString = buildQueryString({ name: this.name });
         const info = await apiRequest(`/modem/info?${queryString}`);
-        this.displayModemInfo(info);
+        // 渲染模板
+        const container = $('#modemInfo');
+        container.innerHTML = app.render.render('modemInfo', { info });
     }
 
     /**
@@ -145,7 +137,9 @@ export class ModemManager {
     async getSignalStrength() {
         const queryString = buildQueryString({ name: this.name });
         const signal = await apiRequest(`/modem/signal?${queryString}`);
-        this.displaySignalInfo(signal);
+        // 渲染模板
+        const container = $('#signalInfo');
+        container.innerHTML = app.render.render('signalInfo', { signal });
     }
 
     /**
@@ -156,8 +150,14 @@ export class ModemManager {
         app.logger.info('正在读取短信列表 ...');
         const queryString = buildQueryString({ name: this.name });
         const smsList = await apiRequest(`/modem/sms/list?${queryString}`);
-        this.displaySMSList(smsList);
         app.logger.info(`已读取 ${smsList.length} 条短信`);
+        // 渲染模板
+        const container = $('#smsList');
+        if (!smsList || smsList.length === 0) {
+            container.innerHTML = '暂无短信';
+        } else {
+            container.innerHTML = smsList.map(sms => app.render.render('smsItem', { sms })).join('');
+        }
     }
 
     /**
@@ -268,82 +268,6 @@ export class ModemManager {
             counter.style.color = '#ff9800';
         } else {
             counter.style.color = '#666';
-        }
-    }
-
-    /* =========================================
-       UI 渲染 (UI Rendering)
-       ========================================= */
-
-    /**
-     * 创建模板
-     * 从HTML中提取模板并清空原始内容
-     */
-    createTemplate() {
-        app.render.extractTemplate('modemInfo', 'modemInfo');
-        app.render.extractTemplate('signalInfo', 'signalInfo');
-        app.render.extractTemplate('smsList', 'smsItem');
-        app.render.extractTemplate('smsCounterTemplate', 'smsCounterTemplate');
-    }
-
-    /**
-     * 渲染模板
-     * 使用数据填充模板中的占位符
-     * @param {string} id - 模板ID
-     * @param {object} data - 模板数据
-     * @returns {string} 渲染后的HTML
-     */
-    renderTemplate(id, data) {
-        return app.render.render(id, data);
-    }
-
-    /**
-     * 显示Modem信息
-     * @param {object} info - Modem信息数据
-     */
-    displayModemInfo(info) {
-        const container = $('#modemInfo');
-        container.innerHTML = this.renderTemplate('modemInfo', { info });
-    }
-
-    /**
-     * 显示信号强度信息
-     * @param {object} signal - 信号强度数据
-     */
-    displaySignalInfo(signal) {
-        const container = $('#signalInfo');
-        container.innerHTML = this.renderTemplate('signalInfo', { signal });
-    }
-
-    /**
-     * 显示短信列表
-     * @param {Array} smsList - 短信列表数据
-     */
-    displaySMSList(smsList) {
-        const container = $('#smsList');
-        if (!smsList || smsList.length === 0) {
-            container.innerHTML = app.render.render('smsItem', {
-                sms: {
-                    phoneNumber: '📱<br>暂无短信',
-                    time: '',
-                    text: '',
-                    indices: 0
-                }
-            });
-        } else {
-            container.innerHTML = smsList.map(sms => app.render.render('smsItem', { sms })).join('');
-        }
-    }
-
-    /**
-     * 清空日志
-     * 清空实时日志显示区域
-     */
-    clearLog() {
-        const logContainer = $('#log');
-        if (logContainer) {
-            logContainer.innerHTML = '';
-            app.logger.info('日志已清空');
         }
     }
 }

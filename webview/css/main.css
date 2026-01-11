@@ -2,8 +2,18 @@
    Main CSS file
    ========================================= */
 
+/* 全局和基础样式 */
 @import 'global.css';
 @import 'layout.css';
-@import 'component.css';
 @import 'utilities.css';
+
+/* 功能模块样式 */
+@import 'modules/common.css';   /* 通用组件：卡片、按钮、表单、表格等 */
+@import 'modules/modem.css';    /* Modem 主界面：信息网格、AT 终端 */
+@import 'modules/sms.css';      /* Modem 短信：短信列表 */
+@import 'modules/smsdb.css';    /* 短信存储：数据库表格、筛选 */
+@import 'modules/webhook.css';  /* Webhook 配置：表格、表单 */
+@import 'modules/logger.css'; /* 日志面板 */
+
+/* 响应式样式 */
 @import 'responsive.css';

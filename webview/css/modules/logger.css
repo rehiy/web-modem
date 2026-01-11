@@ -1,0 +1,110 @@
+/* =========================================
+   日志面板组件 (Log Panel Components)
+   ========================================= */
+
+/* 日志面板基础样式 */
+.logger {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+/* 展开状态 */
+.logger.expanded {
+    height: 400px;
+}
+
+/* 收缩状态 */
+.logger.collapsed {
+    height: 40px;
+}
+
+.logger.collapsed .logger-content {
+    display: none;
+}
+
+/* 日志面板头部 */
+.logger-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--primary);
+    color: white;
+    border-radius: var(--radius) var(--radius) 0 0;
+    cursor: pointer;
+}
+
+.logger-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: color 0.3s ease;
+}
+
+/* 日志面板控制按钮 */
+.logger-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.log-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    transition: background-color 0.2s ease;
+}
+
+.log-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* 日志面板内容区域 */
+.logger-content {
+    height: calc(100% - 48px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 日志容器 */
+.log-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+/* 日志条目 */
+.log-entry {
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-entry.info {
+    color: var(--dark);
+}
+
+.log-entry.success {
+    color: var(--success);
+}
+
+.log-entry.error {
+    color: var(--danger);
+}

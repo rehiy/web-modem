@@ -1,0 +1,67 @@
+/* =========================================
+   短信存储模块 (SMS Database Module)
+   ========================================= */
+
+/* 短信存储表格特定样式 */
+#smsdbBody th:nth-child(1),
+#smsdbBody td:nth-child(1) {
+    width: 40px;
+    text-align: center;
+}
+
+#smsdbBody th:nth-child(2),
+#smsdbBody td:nth-child(2) {
+    width: 60px;
+    text-align: center;
+}
+
+#smsdbBody th:nth-child(3),
+#smsdbBody td:nth-child(3) {
+    width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#smsdbBody th:nth-child(4),
+#smsdbBody td:nth-child(4) {
+    width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#smsdbBody th:nth-child(5),
+#smsdbBody td:nth-child(5) {
+    width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#smsdbBody th:nth-child(6),
+#smsdbBody td:nth-child(6) {
+    min-width: 200px;
+    max-width: 300px;
+    word-break: break-word;
+}
+
+#smsdbBody th:nth-child(7),
+#smsdbBody td:nth-child(7) {
+    width: 150px;
+    white-space: nowrap;
+}
+
+#smsdbBody th:nth-child(8),
+#smsdbBody td:nth-child(8) {
+    width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 短信存储筛选器 */
+#smsdbTab .filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}

@@ -21,7 +21,6 @@ export class SmsdbManager {
         this.total = 0;                   // 总记录数
         this.selectedSmsdb = new Set();   // 选中的短信ID集合
         this.setupEventListeners();
-        this.extractTemplates();
     }
 
     /**
@@ -32,20 +31,11 @@ export class SmsdbManager {
         // 短信存储相关事件
         $('#refreshSmsdbBtn')?.addEventListener('click', () => this.listSmsdb());
         $('#deleteSelectedSmsdbBtn')?.addEventListener('click', () => this.deleteSelectedSmsdb());
-        $('#exportSmsdbBtn')?.addEventListener('click', () => this.exportSmsdb());
         $('#searchSmsdbBtn')?.addEventListener('click', () => this.listSmsdb());
         $('#smsdbPrevPageBtn')?.addEventListener('click', () => this.smsdbPrevPage());
         $('#smsdbNextPageBtn')?.addEventListener('click', () => this.smsdbNextPage());
         $('#smsdbEnabled')?.addEventListener('change', () => this.updateSmsdbSettings());
         $('#smsdbCheckAll')?.addEventListener('change', () => this.toggleCheckAll());
-    }
-
-    /**
-     * 提取模板
-     * 从DOM中提取短信存储相关的模板
-     */
-    extractTemplates() {
-        app.render.extractTemplate('smsdbItem', 'smsdbItem');
     }
 
     /* =========================================
@@ -123,7 +113,7 @@ export class SmsdbManager {
             const result = await apiRequest(`/smsdb/list?${queryString}`);
 
             this.total = result.total;
-            this.displaySmsdbList(result.data);
+            this.displaysmsdbBody(result.data);
             this.updateSmsdbPagination();
         } catch (error) {
             console.error('加载短信存储失败:', error);
@@ -135,35 +125,24 @@ export class SmsdbManager {
      * 将短信数据渲染到表格中
      * @param {Array} smsList - 短信列表数据
      */
-    displaySmsdbList(smsList) {
-        const tbody = $('#smsdbTableBody');
+    displaysmsdbBody(smsList) {
+        const tbody = $('#smsdbList');
         if (!tbody) return;
 
-        tbody.innerHTML = '';
-
         if (!smsList || smsList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">暂无短信</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">暂无短信</td></tr>';
             return;
         }
 
-        const fragment = document.createDocumentFragment();
-        smsList.forEach(sms => {
-            const rowHtml = app.render.render('smsdbItem', {
-                id: sms.id,
-                direction: sms.direction === 'in' ? '📥 接收' : '📤 发送',
-                send_number: sms.send_number || '-',
-                receive_number: sms.receive_number || '-',
-                content: sms.content,
-                receive_time: new Date(sms.receive_time).toLocaleString(),
-                sms_ids: sms.sms_ids
-            });
-            const tempDiv = document.createElement('tbody');
-            tempDiv.innerHTML = rowHtml;
-            while (tempDiv.firstChild) {
-                fragment.appendChild(tempDiv.firstChild);
-            }
-        });
-        tbody.appendChild(fragment);
+        tbody.innerHTML = smsList.map(sms => app.render.render('smsdbItem', {
+            id: sms.id,
+            direction: sms.direction === 'in' ? '📥 接收' : '📤 发送',
+            send_number: sms.send_number || '-',
+            receive_number: sms.receive_number || '-',
+            content: sms.content,
+            receive_time: new Date(sms.receive_time).toLocaleString(),
+            sms_ids: sms.sms_ids
+        })).join('');
     }
 
     toggleSmsdbSelection(id) {
@@ -178,7 +157,7 @@ export class SmsdbManager {
         const checkAll = $('#smsdbCheckAll');
         if (!checkAll) return;
 
-        const checkboxes = $$('#smsdbTableBody input[type="checkbox"]');
+        const checkboxes = $$('#smsdbList input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
             checkbox.checked = checkAll.checked;
             this.toggleSmsdbSelection(parseInt(checkbox.value));
@@ -218,10 +197,6 @@ export class SmsdbManager {
         } catch (error) {
             app.logger.error('批量删除短信失败: ' + error);
         }
-    }
-
-    exportSmsdb() {
-        alert('导出功能开发中...');
     }
 
     smsdbPrevPage() {

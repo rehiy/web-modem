@@ -87,8 +87,8 @@ func BatchDeleteSMS(ids []int) error {
 	return nil
 }
 
-// GetSmsdbListBySMSIDs 根据短信模块的ID查询
-func GetSmsdbListBySMSIDs(smsIDs []int) ([]models.SMS, error) {
+// GetsmsdbBodyBySMSIDs 根据短信模块的ID查询
+func GetsmsdbBodyBySMSIDs(smsIDs []int) ([]models.SMS, error) {
 	if len(smsIDs) == 0 {
 		return []models.SMS{}, nil
 	}

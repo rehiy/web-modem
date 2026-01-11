@@ -26,16 +26,6 @@ export function escapeHtml(text) {
 }
 
 /**
- * 切换按钮禁用状态
- * 批量控制页面中所有按钮和选择框的禁用状态
- * @param {boolean} disabled - 是否禁用（true:禁用, false:启用）
- */
-export function toggleButtons(disabled) {
-    $$('button').forEach(btn => btn.disabled = disabled);
-    $$('select').forEach(btn => btn.disabled = disabled);
-}
-
-/**
  * 向终端添加内容
  * 向指定的终端元素追加文本内容，并自动滚动到底部
  * @param {string} elementId - 终端元素的ID
@@ -50,17 +40,5 @@ export function addToTerminal(elementId, text) {
         fragment.appendChild(line);
         terminal.appendChild(fragment);
         terminal.scrollTop = terminal.scrollHeight;
-    }
-}
-
-/**
- * 清空终端内容
- * 清空指定终端元素的所有内容
- * @param {string} elementId - 终端元素的ID
- */
-export function clearTerminal(elementId) {
-    const terminal = $(`#${elementId}`);
-    if (terminal) {
-        terminal.innerHTML = '';
     }
 }

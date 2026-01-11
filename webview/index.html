@@ -163,7 +163,6 @@
                         <div>
                             <button class="btn btn-secondary" id="refreshSmsdbBtn">刷新</button>
                             <button class="btn btn-danger" id="deleteSelectedSmsdbBtn">删除</button>
-                            <button class="btn btn-success" id="exportSmsdbBtn">导出</button>
                         </div>
                     </div>
 
@@ -191,7 +190,7 @@
 
                         <!-- 短信列表 -->
                         <div class="scroll-container">
-                            <table class="table" id="smsdbList">
+                            <table class="table" id="smsdbBody">
                                 <thead>
                                     <tr>
                                         <th><input type="checkbox" id="smsdbCheckAll"></th>
@@ -204,7 +203,7 @@
                                         <th>操作</th>
                                     </tr>
                                 </thead>
-                                <tbody id="smsdbTableBody">
+                                <tbody id="smsdbList">
                                     <!-- 短信存储列表项模板 -->
                                     <tr id="smsdbItem">
                                         <td><input type="checkbox" value="{id}" onchange="app.smsdbManager.toggleSmsdbSelection({id})"></td>
@@ -325,15 +324,15 @@
     </div>
 
     <!-- 日志面板 -->
-    <div id="logPanel" class="log-panel expanded">
-        <div class="log-panel-header">
-            <span class="log-panel-title">📋 系统日志</span>
-            <div class="log-panel-controls">
+    <div id="logPanel" class="logger expanded">
+        <div class="logger-header">
+            <span class="logger-title">📋 系统日志</span>
+            <div class="logger-controls">
                 <button class="log-btn" id="logClearBtn" title="清空日志">🗑️</button>
                 <button class="log-btn" id="logToggleBtn" title="收缩/展开">⬇️</button>
             </div>
         </div>
-        <div class="log-panel-content">
+        <div class="logger-content">
             <div class="log-container" id="logContainer"></div>
         </div>
     </div>

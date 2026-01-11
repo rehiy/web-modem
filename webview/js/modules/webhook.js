@@ -18,7 +18,6 @@ export class WebhookManager {
     constructor() {
         this.currentWebhookId = null;  // 当前编辑的 Webhook ID
         this.setupEventListeners();
-        this.extractTemplates();
     }
 
     /**
@@ -27,21 +26,10 @@ export class WebhookManager {
      */
     setupEventListeners() {
         // Webhook 相关事件
-        $('#createWebhookBtn')?.addEventListener('click', () => this.showCreateModal());
         $('#refreshWebhooksBtn')?.addEventListener('click', () => this.listWebhooks());
-        $('#closeWebhookModalBtn')?.addEventListener('click', () => this.closeWebhookModal());
         $('#saveWebhookBtn')?.addEventListener('click', () => this.saveWebhook());
-        $('#cancelWebhookBtn')?.addEventListener('click', () => this.closeWebhookModal());
         $('#testWebhookBtn')?.addEventListener('click', () => this.testWebhook());
         $('#webhookEnabled')?.addEventListener('change', () => this.updateWebhookSettings());
-    }
-
-    /**
-     * 提取模板
-     * 从DOM中提取Webhook相关的模板
-     */
-    extractTemplates() {
-        app.render.extractTemplate('webhookItem', 'webhookItem');
     }
 
     /* =========================================
@@ -128,35 +116,28 @@ export class WebhookManager {
         tbody.appendChild(fragment);
     }
 
-    showCreateModal() {
-        this.currentWebhookId = null;
-        $('#webhookModalTitle').textContent = '创建Webhook';
-        $('#webhookName').value = '';
-        $('#webhookURL').value = '';
-        $('#webhookTemplate').value = '{}';
-        $('#webhookEnabledCheckbox').checked = true;
-        $('#webhookModal').classList.add('active');
-    }
-
     async editWebhook(id) {
         try {
             const queryString = buildQueryString({ id });
             const webhook = await apiRequest(`/webhook/get?${queryString}`);
             this.currentWebhookId = id;
-            $('#webhookModalTitle').textContent = '编辑Webhook';
+            $('#webhookFormTitle').textContent = '编辑 Webhook';
             $('#webhookName').value = webhook.name;
             $('#webhookURL').value = webhook.url;
             $('#webhookTemplate').value = webhook.template;
             $('#webhookEnabledCheckbox').checked = webhook.enabled;
-            $('#webhookModal').classList.add('active');
         } catch (error) {
             console.error('加载Webhook详情失败:', error);
         }
     }
 
-    closeWebhookModal() {
-        $('#webhookModal').classList.remove('active');
+    resetForm() {
         this.currentWebhookId = null;
+        $('#webhookFormTitle').textContent = '创建 Webhook';
+        $('#webhookName').value = '';
+        $('#webhookURL').value = '';
+        $('#webhookTemplate').value = '{}';
+        $('#webhookEnabledCheckbox').checked = true;
     }
 
     async saveWebhook() {
@@ -187,18 +168,18 @@ export class WebhookManager {
                 // 更新
                 const queryString = buildQueryString({ id: this.currentWebhookId });
                 await apiRequest(`/webhook/update?${queryString}`, 'PUT', webhookData);
-            app.logger.success('Webhook更新成功');
-        } else {
-            // 创建
-            await apiRequest('/webhook', 'POST', webhookData);
-            app.logger.success('Webhook创建成功');
-        }
+                app.logger.success('Webhook更新成功');
+            } else {
+                // 创建
+                await apiRequest('/webhook', 'POST', webhookData);
+                app.logger.success('Webhook创建成功');
+            }
 
-        this.closeWebhookModal();
-        this.listWebhooks();
-    } catch (error) {
-        app.logger.error('保存Webhook失败: ' + error);
-    }
+            this.resetForm();
+            this.listWebhooks();
+        } catch (error) {
+            app.logger.error('保存Webhook失败: ' + error);
+        }
     }
 
     async deleteWebhook(id) {
