@@ -23,7 +23,7 @@
                     <button class="nav-tab" data-tab="webhook" onclick="app.tabManager.switchTab('webhook')">Webhook</button>
                 </nav>
                 <div class="control-group">
-                    <select class="select" id="modemSelect" onchange="app.modemManager.loadModemRelatedInfo()">
+                    <select class="form-select" id="modemSelect" onchange="app.modemManager.loadModemRelatedInfo()">
                         <option value="">-- 选择串口 --</option>
                     </select>
                     <button class="btn btn-primary" onclick="app.modemManager.refreshModems()">刷新设备</button>
@@ -73,7 +73,7 @@
                                 <span class="info-value">{info.operator}</span>
                             </div>
                         </div>
-                        <div class="info-grid" id="signalInfo" style="margin-top: 1rem;">
+                        <div class="info-grid mt-1" id="signalInfo">
                             <div class="info-item">
                                 <span class="info-label">信号强度</span>
                                 <span class="info-value">{signal.rssi}</span>
@@ -125,7 +125,7 @@
                                 <div class="sms-header">
                                     <span class="sms-number">📱 {sms.phoneNumber} &nbsp;</span>
                                     <span class="sms-time">🕐 {sms.time} &nbsp;</span>
-                                    <span style="flex: auto;"></span>
+                                    <span class="flex-auto"></span>
                                     <button class="btn btn-small btn-danger" onclick="app.modemManager.deleteSMS({sms.indices})">删除</button>
                                 </div>
                                 <div class="sms-message">{sms.text}</div>
@@ -171,7 +171,7 @@
                     <div class="card-body">
                         <!-- 设置 -->
                         <div class="filter-section">
-                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label class="form-checkbox">
                                 <input type="checkbox" id="smsdbEnabled" onchange="app.smsdbManager.updateSmsdbSettings()">
                                 <span>启用数据库存储</span>
                             </label>
@@ -180,7 +180,7 @@
                         <!-- 搜索过滤 -->
                         <div class="filter-section">
                             <input type="text" class="form-input" id="smsdbFilterSendNumber" placeholder="发送号码过滤">
-                            <select class="select" id="smsdbFilterDirection">
+                            <select class="form-select" id="smsdbFilterDirection">
                                 <option value="">所有方向</option>
                                 <option value="in">接收</option>
                                 <option value="out">发送</option>
@@ -191,7 +191,7 @@
                         </div>
 
                         <!-- 短信列表 -->
-                        <div class="scroll-container">
+                        <div class="scroll-container mt-1">
                             <table class="table smsdb-table" id="smsdbTable">
                                 <thead>
                                     <tr>
@@ -225,8 +225,9 @@
 
                         <!-- 分页 -->
                         <div class="pagination">
-                            <button class="btn btn-secondary" onclick="app.smsdbManager.smsdbPrevPage()">上一页</button>
                             <span class="pagination-info" id="smsdbPageInfo">第 1 页</span>
+                            <span class="flex-auto"></span>
+                            <button class="btn btn-secondary" onclick="app.smsdbManager.smsdbPrevPage()">上一页</button>
                             <button class="btn btn-secondary" onclick="app.smsdbManager.smsdbNextPage()">下一页</button>
                         </div>
                     </div>
@@ -249,14 +250,14 @@
                     <div class="card-body">
                         <!-- 设置 -->
                         <div class="filter-section">
-                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label class="form-checkbox">
                                 <input type="checkbox" id="webhookEnabled" onchange="app.webhookManager.updateWebhookSettings()">
                                 <span>启用 Webhook 功能</span>
                             </label>
                         </div>
 
                         <!-- Webhook列表 -->
-                        <div class="scroll-container">
+                        <div class="scroll-container mt-1">
                             <table class="table webhook-table">
                                 <thead>
                                     <tr>
@@ -314,10 +315,10 @@
                         <div class="form-group">
                             <label class="form-label">模板 (JSON)</label>
                             <textarea class="form-textarea" id="webhookTemplate" rows="10" placeholder='{"event": "sms_received", "data": {"content": "{{content}}", "send_number": "{{send_number}}"}}'></textarea>
-                            <small style="color: var(--secondary); font-size: 0.75rem;">可用变量: {{content}}, {{send_number}}, {{receive_number}}, {{receive_time}}, {{sms_ids}}, {{direction}}</small>
+                            <small class="text-small-secondary">可用变量: {{content}}, {{send_number}}, {{receive_number}}, {{receive_time}}, {{sms_ids}}, {{direction}}</small>
                         </div>
                         <div class="form-group">
-                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label class="form-checkbox">
                                 <input type="checkbox" id="webhookEnabledCheckbox">
                                 <span>启用</span>
                             </label>

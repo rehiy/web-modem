@@ -114,7 +114,7 @@ export class SmsdbManager {
         if (!tbody) return;
 
         if (!smsList || smsList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">暂无短信</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-table-cell">暂无短信</td></tr>';
             return;
         }
 

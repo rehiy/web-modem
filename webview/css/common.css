@@ -312,7 +312,7 @@ body {
 }
 
 /* 选择框 */
-.select {
+.form-select {
     width: 200px;
     height: 40px;
     padding: 0.625rem 1rem;
@@ -322,6 +322,14 @@ body {
     font-size: 0.875rem;
     line-height: normal;
     box-sizing: border-box;
+}
+
+/* 复选框标签 */
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
 }
 
 /* 控件组 */
@@ -395,6 +403,33 @@ body {
 /* 最后一行边框处理 */
 .table tbody tr:last-child td {
     border-bottom: none;
+}
+
+/**
+ * 工具类 (Utility Classes)
+ */
+
+/* 弹性布局工具 */
+.flex-auto {
+    flex: auto;
+}
+
+/* 间距工具 */
+.mt-1 {
+    margin-top: 1rem;
+}
+
+/* 小型次要文本 */
+.text-small-secondary {
+    color: var(--secondary);
+    font-size: 0.75rem;
+}
+
+/* 空表格单元格 */
+.empty-table-cell {
+    text-align: center;
+    padding: 20px;
+    color: var(--secondary);
 }
 
 /**

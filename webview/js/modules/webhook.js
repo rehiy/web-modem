@@ -239,7 +239,7 @@ export class WebhookManager {
             const webhooks = await apiRequest('/webhook/list');
             const tbody = $('#webhookList');
             if (!webhooks || webhooks.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">暂无 Webhook 配置</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-table-cell">暂无 Webhook 配置</td></tr>';
                 return;
             }
             tbody.innerHTML = webhooks.map(webhook => app.render.render('webhookItem', {
