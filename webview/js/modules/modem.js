@@ -16,7 +16,7 @@ export class ModemManager {
      * 初始化Modem管理器的基本状态和属性
      */
     constructor() {
-        this.name = null;         // 当前选中的Modem名称
+        this.name = null;
         this.setupSMSCounter();
         this.refreshModems();
     }
@@ -205,15 +205,13 @@ export class ModemManager {
         const textarea = $('#smsMessage');
         if (!textarea) return;
 
-        const existing = $('#smsCounter');
-        if (!existing) {
+        if (!$('#smsCounter')) {
             const counter = document.createElement('div');
             counter.id = 'smsCounter';
             counter.style.cssText = 'margin-top: 5px; color: #666; font-size: 12px;';
             textarea.parentNode.appendChild(counter);
+            textarea.addEventListener('input', () => this.updateSMSCounter());
         }
-
-        textarea.addEventListener('input', () => this.updateSMSCounter());
         this.updateSMSCounter();
     }
 

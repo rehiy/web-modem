@@ -18,15 +18,16 @@
             <div class="header-controls">
                 <nav class="nav-tabs">
                     <button class="nav-tab active" data-tab="main" onclick="app.tabManager.switchTab('main')">主界面</button>
+                    <button class="nav-tab" data-tab="sms" onclick="app.tabManager.switchTab('sms')">短信收发</button>
                     <button class="nav-tab" data-tab="smsdb" onclick="app.tabManager.switchTab('smsdb')">短信存储</button>
                     <button class="nav-tab" data-tab="webhook" onclick="app.tabManager.switchTab('webhook')">Webhook</button>
                 </nav>
-<div class="control-group">
-                        <select class="select" id="modemSelect" onchange="app.modemManager.loadModemRelatedInfo()">
-                            <option value="">-- 选择串口 --</option>
-                        </select>
-                        <button class="btn btn-primary" onclick="app.modemManager.refreshModems()">刷新设备</button>
-                    </div>
+                <div class="control-group">
+                    <select class="select" id="modemSelect" onchange="app.modemManager.loadModemRelatedInfo()">
+                        <option value="">-- 选择串口 --</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="app.modemManager.refreshModems()">刷新设备</button>
+                </div>
             </div>
         </header>
 
@@ -42,7 +43,7 @@
                         <h2 class="card-title">Modem 信息</h2>
                         <div>
                             <button class="btn btn-secondary" onclick="app.modemManager.getModemInfo()">获取信息</button>
-                            <button class="btn btn-secondary" onclick="app.modemManager.getSignalStrength()">信号强度</button>
+                            <button class="btn btn-secondary" onclick="app.modemManager.getSignalStrength()">刷新信号</button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -93,11 +94,30 @@
                     </div>
                 </div>
 
+                <!-- AT 命令终端 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">AT 命令终端</h2>
+                        <button class="btn btn-primary" onclick="app.modemManager.sendATCommand()">发送指令</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <input type="text" class="form-input" id="atCommand" placeholder="输入 AT 命令 (例如: AT+CGMI)">
+                        </div>
+                        <div class="terminal" id="terminal"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 短信收发 -->
+            <div id="smsTab" class="tab-content">
+
                 <!-- 接收短信 -->
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">接收短信</h2>
-                        <button class="btn btn-primary" onclick="app.modemManager.listSMS()">刷新短信</button>
+                        <button class="btn btn-secondary" onclick="app.modemManager.listSMS()">刷新列表</button>
                     </div>
                     <div class="card-body">
                         <div class="scroll-container" id="smsList">
@@ -130,20 +150,6 @@
                             <textarea class="form-textarea" id="smsMessage" placeholder="输入短信内容..."></textarea>
                         </div>
                         <div id="smsCounter"></div>
-                    </div>
-                </div>
-
-                <!-- AT 命令终端 -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">AT 命令终端</h2>
-                        <button class="btn btn-primary" onclick="app.modemManager.sendATCommand()">发送指令</button>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <input type="text" class="form-input" id="atCommand" placeholder="输入 AT 命令 (例如: AT+CGMI)">
-                        </div>
-                        <div class="terminal" id="terminal"></div>
                     </div>
                 </div>
 
@@ -287,7 +293,7 @@
                     <div class="card-header">
                         <h2 class="card-title" id="webhookFormTitle">创建 Webhook</h2>
                         <div>
-                            <button class="btn btn-primary" onclick="app.webhookManager.saveWebhook()">保存</button>
+                            <button class="btn btn-primary" onclick="app.webhookManager.saveWebhook()">保存配置</button>
                         </div>
                     </div>
                     <div class="card-body">

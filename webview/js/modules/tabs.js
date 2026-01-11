@@ -16,10 +16,7 @@ export class TabManager {
      * @param {Object} smsdbManager - 短信存储管理器实例
      * @param {Object} webhookManager - Webhook管理器实例
      */
-    constructor(modemManager, smsdbManager, webhookManager) {
-        this.modemManager = modemManager;
-        this.smsdbManager = smsdbManager;
-        this.webhookManager = webhookManager;
+    constructor() {
         this.currentTab = 'main';
     }
 
@@ -41,44 +38,36 @@ export class TabManager {
         });
 
         this.currentTab = tabName;
-
-        // 根据标签加载相应的数据
-        this.loadTabData(tabName);
+        this.loadTabData();
     }
 
     /**
      * 加载标签数据
      * 根据当前标签加载相应的数据和设置
-     * @param {string} tabName - 标签名称
      */
-    loadTabData(tabName) {
-        switch (tabName) {
+    loadTabData() {
+        switch (this.currentTab) {
+            case 'sms':
+                if (app.modemManager) {
+                    app.modemManager.listSMS();
+                }
+                break;
             case 'smsdb':
-                if (this.smsdbManager) {
-                    this.smsdbManager.loadSmsdbSettings();
-                    this.smsdbManager.listSmsdb();
+                if (app.smsdbManager) {
+                    app.smsdbManager.loadSmsdbSettings();
+                    app.smsdbManager.listSmsdb();
                 }
                 break;
-
             case 'webhook':
-                if (this.webhookManager) {
-                    this.webhookManager.loadWebhookSettings();
-                    this.webhookManager.listWebhooks();
+                if (app.webhookManager) {
+                    app.webhookManager.loadWebhookSettings();
+                    app.webhookManager.listWebhooks();
                 }
                 break;
-
             case 'main':
             default:
-                // 主界面不需要特殊处理
+                // 主页面不加载数据
                 break;
         }
-    }
-
-    /**
-     * 获取当前标签
-     * @returns {string} 当前激活的标签名称
-     */
-    getCurrentTab() {
-        return this.currentTab;
     }
 }
