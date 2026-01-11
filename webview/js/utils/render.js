@@ -1,5 +1,5 @@
 /* =========================================
-   渲染器工具模块 (Renderer Utilities)
+   渲染器工具模块 (render Utilities)
    ========================================= */
 
 import { $, escapeHtml } from './dom.js';
@@ -8,7 +8,7 @@ import { $, escapeHtml } from './dom.js';
  * UI渲染器类
  * 负责模板渲染和UI更新
  */
-export class UIRenderer {
+export class UIrender {
 
     /**
      * 构造函数

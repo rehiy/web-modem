@@ -4,7 +4,6 @@
 
 import { apiRequest, buildQueryString } from '../utils/api.js';
 import { $, $$ } from '../utils/dom.js';
-import { UIRenderer } from '../utils/renderer.js';
 
 /**
  * 短信存储管理器类
@@ -21,7 +20,6 @@ export class SmsdbManager {
         this.pageSize = 50;               // 每页显示数量
         this.total = 0;                   // 总记录数
         this.selectedSmsdb = new Set();   // 选中的短信ID集合
-        this.renderer = new UIRenderer(); // 模板渲染器
         this.setupEventListeners();
         this.extractTemplates();
     }
@@ -47,7 +45,7 @@ export class SmsdbManager {
      * 从DOM中提取短信存储相关的模板
      */
     extractTemplates() {
-        this.renderer.extractTemplate('smsdbItem', 'smsdbItem');
+        app.render.extractTemplate('smsdbItem', 'smsdbItem');
     }
 
     /* =========================================
@@ -150,7 +148,7 @@ export class SmsdbManager {
 
         const fragment = document.createDocumentFragment();
         smsList.forEach(sms => {
-            const rowHtml = this.renderer.render('smsdbItem', {
+            const rowHtml = app.render.render('smsdbItem', {
                 id: sms.id,
                 direction: sms.direction === 'in' ? '📥 接收' : '📤 发送',
                 send_number: sms.send_number || '-',

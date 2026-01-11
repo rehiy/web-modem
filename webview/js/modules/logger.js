@@ -8,47 +8,15 @@ import { $ } from '../utils/dom.js';
  * 全局日志面板类
  * 提供可收缩的悬浮窗日志显示功能
  */
-export class LogPanel {
+export class Logger {
     
     /**
      * 构造函数
      */
     constructor() {
         this.isExpanded = true;
-        this.isMinimized = false;
-        this.createPanel();
-        this.setupEventListeners();
-    }
-
-    /**
-     * 创建日志面板
-     */
-    createPanel() {
-        // 如果面板已存在，先移除
-        const existingPanel = $('#logPanel');
-        if (existingPanel) {
-            existingPanel.remove();
-        }
-
-        // 创建日志面板HTML结构
-        const panel = document.createElement('div');
-        panel.id = 'logPanel';
-        panel.className = 'log-panel expanded';
-        panel.innerHTML = `
-            <div class="log-panel-header">
-                <span class="log-panel-title">📋 系统日志</span>
-                <div class="log-panel-controls">
-                    <button class="log-btn" id="logClearBtn" title="清空日志">🗑️</button>
-                    <button class="log-btn" id="logToggleBtn" title="收缩/展开">⬇️</button>
-                </div>
-            </div>
-            <div class="log-panel-content">
-                <div class="log-container" id="logContainer"></div>
-            </div>
-        `;
-
-        document.body.appendChild(panel);
         this.container = $('#logContainer');
+        this.setupEventListeners();
     }
 
     /**
@@ -76,11 +44,6 @@ export class LogPanel {
 
         this.container.appendChild(logEntry);
         this.container.scrollTop = this.container.scrollHeight;
-
-        // 如果是最小化状态，显示新消息提示
-        if (this.isMinimized) {
-            this.showNewMessageIndicator();
-        }
     }
 
     /**

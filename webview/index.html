@@ -324,6 +324,20 @@
         </main>
     </div>
 
+    <!-- 日志面板 -->
+    <div id="logPanel" class="log-panel expanded">
+        <div class="log-panel-header">
+            <span class="log-panel-title">📋 系统日志</span>
+            <div class="log-panel-controls">
+                <button class="log-btn" id="logClearBtn" title="清空日志">🗑️</button>
+                <button class="log-btn" id="logToggleBtn" title="收缩/展开">⬇️</button>
+            </div>
+        </div>
+        <div class="log-panel-content">
+            <div class="log-container" id="logContainer"></div>
+        </div>
+    </div>
+
     <script type="module" src="js/main.js"></script>
 </body>
 

@@ -12,7 +12,8 @@ import { ModemManager } from './modules/modem.js';
 import { SmsdbManager } from './modules/smsdb.js';
 import { WebhookManager } from './modules/webhook.js';
 import { WebSocketService } from './modules/websocket.js';
-import { LogPanel } from './components/LogPanel.js';
+import { Logger } from './modules/logger.js';
+import { UIrender } from './utils/render.js';
 
 // 全局应用对象
 window.app = {};
@@ -24,7 +25,10 @@ window.app = {};
 async function init() {
     try {
         // 初始化全局日志面板
-        app.logger = new LogPanel();
+        app.logger = new Logger();
+
+        // 初始化全局渲染器
+        app.render = new UIrender();
         
         // 初始化 WebSocket 服务
         app.webSocketService = new WebSocketService(app.logger);

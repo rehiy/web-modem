@@ -4,7 +4,6 @@
 
 import { apiRequest, buildQueryString } from '../utils/api.js';
 import { $, addToTerminal } from '../utils/dom.js';
-import { UIRenderer } from '../utils/renderer.js';
 
 /**
  * Modem管理器类
@@ -19,9 +18,6 @@ export class ModemManager {
     constructor() {
         this.isBusy = false;      // 操作繁忙状态标志
         this.name = null;         // 当前选中的Modem名称
-        
-        // 使用独立的渲染器
-        this.renderer = new UIRenderer();
         this.init();
     }
 
@@ -256,7 +252,7 @@ export class ModemManager {
         const encoding = hasUnicode ? 'UCS2 (中文)' : 'GSM 7-bit';
 
         // 使用模板渲染计数器内容
-        const counterHtml = this.renderer.render('smsCounterTemplate', {
+        const counterHtml = app.render.render('smsCounterTemplate', {
             length: message.length,
             maxChars: maxChars,
             parts: parts,
@@ -284,10 +280,10 @@ export class ModemManager {
      * 从HTML中提取模板并清空原始内容
      */
     createTemplate() {
-        this.renderer.extractTemplate('modemInfo', 'modemInfo');
-        this.renderer.extractTemplate('signalInfo', 'signalInfo');
-        this.renderer.extractTemplate('smsList', 'smsItem');
-        this.renderer.extractTemplate('smsCounterTemplate', 'smsCounterTemplate');
+        app.render.extractTemplate('modemInfo', 'modemInfo');
+        app.render.extractTemplate('signalInfo', 'signalInfo');
+        app.render.extractTemplate('smsList', 'smsItem');
+        app.render.extractTemplate('smsCounterTemplate', 'smsCounterTemplate');
     }
 
     /**
@@ -298,7 +294,7 @@ export class ModemManager {
      * @returns {string} 渲染后的HTML
      */
     renderTemplate(id, data) {
-        return this.renderer.render(id, data);
+        return app.render.render(id, data);
     }
 
     /**
@@ -326,7 +322,7 @@ export class ModemManager {
     displaySMSList(smsList) {
         const container = $('#smsList');
         if (!smsList || smsList.length === 0) {
-            container.innerHTML = this.renderer.render('smsItem', {
+            container.innerHTML = app.render.render('smsItem', {
                 sms: {
                     phoneNumber: '📱<br>暂无短信',
                     time: '',
@@ -335,7 +331,7 @@ export class ModemManager {
                 }
             });
         } else {
-            container.innerHTML = smsList.map(sms => this.renderTemplate('smsItem', { sms })).join('');
+            container.innerHTML = smsList.map(sms => app.render.render('smsItem', { sms })).join('');
         }
     }
 

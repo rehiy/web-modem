@@ -4,7 +4,6 @@
 
 import { apiRequest, buildQueryString } from '../utils/api.js';
 import { $ } from '../utils/dom.js';
-import { UIRenderer } from '../utils/renderer.js';
 
 /**
  * Webhook管理器类
@@ -18,7 +17,6 @@ export class WebhookManager {
      */
     constructor() {
         this.currentWebhookId = null;  // 当前编辑的 Webhook ID
-        this.renderer = new UIRenderer();
         this.setupEventListeners();
         this.extractTemplates();
     }
@@ -43,7 +41,7 @@ export class WebhookManager {
      * 从DOM中提取Webhook相关的模板
      */
     extractTemplates() {
-        this.renderer.extractTemplate('webhookItem', 'webhookItem');
+        app.render.extractTemplate('webhookItem', 'webhookItem');
     }
 
     /* =========================================
@@ -114,7 +112,7 @@ export class WebhookManager {
 
         const fragment = document.createDocumentFragment();
         webhooks.forEach(webhook => {
-            const rowHtml = this.renderer.render('webhookItem', {
+            const rowHtml = app.render.render('webhookItem', {
                 id: webhook.id,
                 name: webhook.name,
                 url: webhook.url,
