@@ -17,16 +17,16 @@
             </div>
             <div class="header-controls">
                 <nav class="nav-tabs">
-                    <button class="nav-tab active" data-tab="main">主界面</button>
-                    <button class="nav-tab" data-tab="smsdb">短信存储</button>
-                    <button class="nav-tab" data-tab="webhook">Webhook</button>
+                    <button class="nav-tab active" data-tab="main" onclick="app.tabManager.switchTab('main')">主界面</button>
+                    <button class="nav-tab" data-tab="smsdb" onclick="app.tabManager.switchTab('smsdb')">短信存储</button>
+                    <button class="nav-tab" data-tab="webhook" onclick="app.tabManager.switchTab('webhook')">Webhook</button>
                 </nav>
-                <div class="control-group">
-                    <select class="select" id="modemSelect">
-                        <option value="">-- 选择串口 --</option>
-                    </select>
-                    <button class="btn btn-primary" id="refreshBtn">刷新设备</button>
-                </div>
+<div class="control-group">
+                        <select class="select" id="modemSelect" onchange="app.modemManager.loadModemRelatedInfo()">
+                            <option value="">-- 选择串口 --</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="app.modemManager.refreshModems()">刷新设备</button>
+                    </div>
             </div>
         </header>
 
@@ -41,8 +41,8 @@
                     <div class="card-header">
                         <h2 class="card-title">Modem 信息</h2>
                         <div>
-                            <button class="btn btn-secondary" id="getModemInfoBtn">获取信息</button>
-                            <button class="btn btn-secondary" id="getSignalStrengthBtn">信号强度</button>
+                            <button class="btn btn-secondary" onclick="app.modemManager.getModemInfo()">获取信息</button>
+                            <button class="btn btn-secondary" onclick="app.modemManager.getSignalStrength()">信号强度</button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -97,7 +97,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">接收短信</h2>
-                        <button class="btn btn-primary" id="listSMSBtn">刷新短信</button>
+                        <button class="btn btn-primary" onclick="app.modemManager.listSMS()">刷新短信</button>
                     </div>
                     <div class="card-body">
                         <div class="scroll-container" id="smsList">
@@ -106,7 +106,7 @@
                                     <span class="sms-number">📱 {sms.phoneNumber} &nbsp;</span>
                                     <span class="sms-time">🕐 {sms.time} &nbsp;</span>
                                     <span style="flex: auto;"></span>
-                                    <button class="delete-btn" onclick="app.modemManager.deleteSMS({sms.indices})">删除</button>
+                                    <button class="btn btn-small btn-danger" onclick="app.modemManager.deleteSMS({sms.indices})">删除</button>
                                 </div>
                                 <div class="sms-message">{sms.text}</div>
                             </div>
@@ -118,7 +118,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">发送短信</h2>
-                        <button class="btn btn-primary" id="sendSMSBtn">发送短信</button>
+                        <button class="btn btn-primary" onclick="app.modemManager.sendSMS()">发送短信</button>
                     </div>
                     <div class="card-body">
                         <div class="form-group">
@@ -137,7 +137,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">AT 命令终端</h2>
-                        <button class="btn btn-primary" id="sendATCommandBtn">发送指令</button>
+                        <button class="btn btn-primary" onclick="app.modemManager.sendATCommand()">发送指令</button>
                     </div>
                     <div class="card-body">
                         <div class="form-group">
@@ -156,9 +156,9 @@
                     <div class="card-header">
                         <h2 class="card-title">短信存储管理</h2>
                         <div>
-                            <button class="btn btn-secondary" id="refreshSmsdbBtn">刷新</button>
-                            <button class="btn btn-success" id="syncModemSMSBtn">同步</button>
-                            <button class="btn btn-danger" id="deleteSelectedSmsdbBtn">删除</button>
+                            <button class="btn btn-secondary" onclick="app.smsdbManager.listSmsdb()">刷新</button>
+                            <button class="btn btn-success" onclick="app.smsdbManager.syncCurrentModemSMS()">同步</button>
+                            <button class="btn btn-danger" onclick="app.smsdbManager.deleteSelectedSmsdb()">删除</button>
                         </div>
                     </div>
 
@@ -166,7 +166,7 @@
                         <!-- 设置 -->
                         <div class="filter-section">
                             <label style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" id="smsdbEnabled">
+                                <input type="checkbox" id="smsdbEnabled" onchange="app.smsdbManager.updateSmsdbSettings()">
                                 <span>启用数据库存储</span>
                             </label>
                         </div>
@@ -181,7 +181,7 @@
                             </select>
                             <input type="date" class="form-input" id="smsdbFilterStartDate" placeholder="开始日期">
                             <input type="date" class="form-input" id="smsdbFilterEndDate" placeholder="结束日期">
-                            <button class="btn btn-primary" id="searchSmsdbBtn">搜索</button>
+                            <button class="btn btn-primary" onclick="app.smsdbManager.listSmsdb()">搜索</button>
                         </div>
 
                         <!-- 短信列表 -->
@@ -189,7 +189,7 @@
                             <table class="table smsdb-table" id="smsdbTable">
                                 <thead>
                                     <tr>
-                                        <th><input type="checkbox" id="smsdbCheckAll"></th>
+                                        <th><input type="checkbox" id="smsdbCheckAll" onchange="app.smsdbManager.toggleCheckAll()"></th>
                                         <th>ID</th>
                                         <th>方向</th>
                                         <th>发送号码</th>
@@ -210,7 +210,7 @@
                                         <td>{content}</td>
                                         <td>{receive_time}</td>
                                         <td>
-                                            <button class="delete-btn" onclick="app.smsdbManager.deleteSmsdb({id})">删除</button>
+                                            <button class="btn btn-small btn-danger" onclick="app.smsdbManager.deleteSmsdb({id})">删除</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -219,9 +219,9 @@
 
                         <!-- 分页 -->
                         <div class="pagination">
-                            <button class="btn btn-secondary" id="smsdbPrevPageBtn">上一页</button>
+                            <button class="btn btn-secondary" onclick="app.smsdbManager.smsdbPrevPage()">上一页</button>
                             <span class="pagination-info" id="smsdbPageInfo">第 1 页</span>
-                            <button class="btn btn-secondary" id="smsdbNextPageBtn">下一页</button>
+                            <button class="btn btn-secondary" onclick="app.smsdbManager.smsdbNextPage()">下一页</button>
                         </div>
                     </div>
                 </div>
@@ -236,7 +236,7 @@
                     <div class="card-header">
                         <h2 class="card-title">Webhook 配置管理</h2>
                         <div>
-                            <button class="btn btn-secondary" id="refreshWebhooksBtn">刷新列表</button>
+                            <button class="btn btn-secondary" onclick="app.webhookManager.listWebhooks()">刷新列表</button>
                         </div>
                     </div>
 
@@ -244,14 +244,14 @@
                         <!-- 设置 -->
                         <div class="filter-section">
                             <label style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" id="webhookEnabled">
+                                <input type="checkbox" id="webhookEnabled" onchange="app.webhookManager.updateWebhookSettings()">
                                 <span>启用 Webhook 功能</span>
                             </label>
                         </div>
 
                         <!-- Webhook列表 -->
                         <div class="scroll-container">
-                            <table class="table webhook-table" id="webhookTable">
+                            <table class="table webhook-table">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -271,9 +271,9 @@
                                         <td>{enabled}</td>
                                         <td>{created_at}</td>
                                         <td>
-                                            <button onclick="app.webhookManager.editWebhook({id})">编辑</button>
-                                            <button class="delete-btn" onclick="app.webhookManager.deleteWebhook({id})">删除</button>
-                                            <button onclick="app.webhookManager.testWebhook({id})">测试</button>
+                                            <button class="btn btn-small btn-success" onclick="app.webhookManager.editWebhook({id})">编辑</button>
+                                            <button class="btn btn-small btn-danger" onclick="app.webhookManager.deleteWebhook({id})">删除</button>
+                                            <button class="btn btn-small btn-secondary" onclick="app.webhookManager.testWebhook({id})">测试</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -287,8 +287,7 @@
                     <div class="card-header">
                         <h2 class="card-title" id="webhookFormTitle">创建 Webhook</h2>
                         <div>
-                            <button class="btn btn-secondary" id="testWebhookBtn">测试</button>
-                            <button class="btn btn-primary" id="saveWebhookBtn">保存</button>
+                            <button class="btn btn-primary" onclick="app.webhookManager.saveWebhook()">保存</button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -298,7 +297,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">预设模板</label>
-                            <select class="form-input" id="webhookTemplateSelect">
+                            <select class="form-input" id="webhookTemplateSelect" onchange="app.webhookManager.applyPresetTemplate()">
                                 <option value="custom">自定义</option>
                             </select>
                         </div>
@@ -330,8 +329,8 @@
         <div class="logger-header">
             <span class="logger-title">📋 系统日志</span>
             <div class="logger-controls">
-                <button class="log-btn" id="logClearBtn" title="清空日志">🗑️</button>
-                <button class="log-btn" id="logToggleBtn" title="收缩/展开">⬇️</button>
+                <button class="log-btn" title="清空日志" onclick="app.logger.clear()">🗑️</button>
+                <button class="log-btn" title="收缩/展开" onclick="app.logger.toggle()">⬇️</button>
             </div>
         </div>
         <div class="logger-content">

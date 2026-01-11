@@ -19,14 +19,6 @@ export class ModemManager {
         this.name = null;         // 当前选中的Modem名称
         this.setupSMSCounter();
         this.refreshModems();
-        // 绑定所有Modem相关的UI事件
-        $('#modemSelect')?.addEventListener('change', () => this.loadModemRelatedInfo());
-        $('#refreshBtn')?.addEventListener('click', () => this.refreshModems());
-        $('#getModemInfoBtn')?.addEventListener('click', () => this.getModemInfo());
-        $('#getSignalStrengthBtn')?.addEventListener('click', () => this.getSignalStrength());
-        $('#listSMSBtn')?.addEventListener('click', () => this.listSMS());
-        $('#sendSMSBtn')?.addEventListener('click', () => this.sendSMS());
-        $('#sendATCommandBtn')?.addEventListener('click', () => this.sendATCommand());
     }
 
     /* =========================================

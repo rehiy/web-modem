@@ -53,11 +53,3 @@
     word-wrap: break-word;
     margin-bottom: 0.5rem;
 }
-
-/* 短信删除按钮 */
-.sms-header .delete-btn {
-    flex-shrink: 0;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.8rem;
-    border-radius: 4px;
-}

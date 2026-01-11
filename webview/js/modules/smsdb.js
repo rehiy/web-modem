@@ -20,15 +20,6 @@ export class SmsdbManager {
         this.pageSize = 50;               // 每页显示数量
         this.total = 0;                   // 总记录数
         this.selectedSmsdb = new Set();   // 选中的短信ID集合
-        // 短信存储相关事件
-        $('#refreshSmsdbBtn')?.addEventListener('click', () => this.listSmsdb());
-        $('#deleteSelectedSmsdbBtn')?.addEventListener('click', () => this.deleteSelectedSmsdb());
-        $('#searchSmsdbBtn')?.addEventListener('click', () => this.listSmsdb());
-        $('#smsdbPrevPageBtn')?.addEventListener('click', () => this.smsdbPrevPage());
-        $('#smsdbNextPageBtn')?.addEventListener('click', () => this.smsdbNextPage());
-        $('#smsdbEnabled')?.addEventListener('change', () => this.updateSmsdbSettings());
-        $('#smsdbCheckAll')?.addEventListener('change', () => this.toggleCheckAll());
-        $('#syncModemSMSBtn')?.addEventListener('click', () => this.syncCurrentModemSMS());
     }
 
     /* =========================================

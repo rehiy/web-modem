@@ -159,12 +159,6 @@ export class WebhookManager {
         this.currentWebhookId = null;  // 当前编辑的 Webhook ID
         // 初始化预设模板选项
         this.initPresetTemplates();
-        // Webhook 相关事件
-        $('#refreshWebhooksBtn')?.addEventListener('click', () => this.listWebhooks());
-        $('#saveWebhookBtn')?.addEventListener('click', () => this.saveWebhook());
-        $('#testWebhookBtn')?.addEventListener('click', () => this.testWebhook());
-        $('#webhookEnabled')?.addEventListener('change', () => this.updateWebhookSettings());
-        $('#webhookTemplateSelect')?.addEventListener('change', () => this.applyPresetTemplate());
     }
 
     /**
@@ -252,7 +246,7 @@ export class WebhookManager {
                 id: webhook.id,
                 name: webhook.name,
                 url: webhook.url,
-                enabled: webhook.enabled ? '✅ 启用' : '❌ 禁用',
+                enabled: webhook.enabled ? '✅' : '❌',
                 created_at: new Date(webhook.created_at).toLocaleString()
             })).join('');
         } catch (error) {

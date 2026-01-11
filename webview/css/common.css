@@ -227,6 +227,19 @@ body {
     box-sizing: border-box;
 }
 
+/* 禁用状态 */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 小号按钮 */
+.btn-small {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    height: 32px;
+}
+
 /* 主按钮 */
 .btn-primary {
     background: var(--primary);
@@ -253,31 +266,6 @@ body {
 .btn-success {
     background: var(--success);
     color: white;
-}
-
-/* 禁用状态 */
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* 删除按钮 (特殊样式) */
-.delete-btn {
-    background: var(--danger);
-    color: white;
-    border: none;
-    padding: 0.625rem 1rem;
-    border-radius: var(--radius);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    height: 40px;
-    line-height: normal;
-    box-sizing: border-box;
-}
-
-.delete-btn:hover {
-    background: #dc2626;
 }
 
 /**

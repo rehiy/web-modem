@@ -35,7 +35,12 @@
 
 .webhook-table th:nth-child(6),
 .webhook-table td:nth-child(6) {
-    width: 140px;
+    width: 240px;
     text-align: center;
     white-space: nowrap;
+}
+
+/* 优化表格中的按钮样式 */
+.webhook-table td:nth-child(6) .btn {
+    margin-right: 0.25rem;
 }
