@@ -2,8 +2,8 @@
    Webhook 管理模块 (Webhook Management Module)
    ========================================= */
 
-import { apiRequest, buildQueryString } from '../utils/api.js';
 import { $ } from '../utils/dom.js';
+import { apiRequest, buildQueryString } from '../utils/api.js';
 
 /**
  * 预设模板定义

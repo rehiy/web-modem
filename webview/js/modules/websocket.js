@@ -17,6 +17,7 @@ export class WebSocketService {
         this.ws = null;
         this.eventListeners = new Map();
         this.reconnectTimeout = null;
+        this.connect(`ws://${location.host}/ws/modem`);
     }
 
     /**
@@ -32,7 +33,7 @@ export class WebSocketService {
             this.ws = new WebSocket(url);
             this.setupEventListeners();
         } catch (error) {
-            console.error('WebSocket连接失败:', error);
+            app.logger.error('WebSocket连接失败:', error);
             this.scheduleReconnect(url);
         }
     }
@@ -42,7 +43,7 @@ export class WebSocketService {
      */
     setupEventListeners() {
         this.ws.onopen = () => {
-            console.log('WebSocket 已连接');
+            app.logger.info('WebSocket 已连接');
             this.emit('connected');
         };
 
@@ -51,12 +52,12 @@ export class WebSocketService {
         };
 
         this.ws.onerror = (error) => {
-            console.error('WebSocket 错误:', error);
+            app.logger.error('WebSocket 错误:', error);
             this.emit('error', error);
         };
 
         this.ws.onclose = () => {
-            console.log('WebSocket 已断开');
+            app.logger.info('WebSocket 已断开');
             this.emit('disconnected');
             this.scheduleReconnect(this.ws.url);
         };
@@ -100,7 +101,7 @@ export class WebSocketService {
                 try {
                     callback(data);
                 } catch (error) {
-                    console.error(`WebSocket事件处理错误 (${event}):`, error);
+                    app.logger.error(`WebSocket事件处理错误 (${event}):`, error);
                 }
             });
         }
@@ -125,7 +126,7 @@ export class WebSocketService {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
-        
+
         if (this.ws) {
             this.ws.close();
             this.ws = null;
@@ -140,33 +141,9 @@ export class WebSocketService {
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
         }
-        
+
         this.reconnectTimeout = setTimeout(() => {
             this.connect(url);
         }, 5000);
-    }
-
-    /**
-     * 检查WebSocket连接状态
-     * @returns {string} 连接状态
-     */
-    getState() {
-        if (!this.ws) return 'DISCONNECTED';
-        
-        switch (this.ws.readyState) {
-            case WebSocket.CONNECTING: return 'CONNECTING';
-            case WebSocket.OPEN: return 'OPEN';
-            case WebSocket.CLOSING: return 'CLOSING';
-            case WebSocket.CLOSED: return 'CLOSED';
-            default: return 'UNKNOWN';
-        }
-    }
-
-    /**
-     * 是否已连接
-     * @returns {boolean} 是否已连接
-     */
-    isConnected() {
-        return this.ws?.readyState === WebSocket.OPEN;
     }
 }

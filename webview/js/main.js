@@ -30,10 +30,6 @@ async function init() {
         // 初始化全局渲染器
         app.render = new UIrender();
 
-        // 初始化 WebSocket 服务
-        app.webSocketService = new WebSocketService();
-        app.webSocketService.connect(`ws://${location.host}/ws/modem`);
-
         // 初始化各个功能管理器
         app.modemManager = new ModemManager();
         app.smsdbManager = new SmsdbManager();
@@ -41,6 +37,9 @@ async function init() {
 
         // 初始化标签管理器
         app.tabManager = new TabManager();
+
+        // 初始化 WebSocket 服务
+        app.webSocket = new WebSocketService();
 
         // 记录应用启动日志
         app.logger.success('Modem 管理系统已启动');

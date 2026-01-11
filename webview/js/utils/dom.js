@@ -24,21 +24,3 @@ export function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
-/**
- * 向终端添加内容
- * 向指定的终端元素追加文本内容，并自动滚动到底部
- * @param {string} elementId - 终端元素的ID
- * @param {string} text - 要添加的文本内容
- */
-export function addToTerminal(elementId, text) {
-    const terminal = $(`#${elementId}`);
-    if (terminal) {
-        const fragment = document.createDocumentFragment();
-        const line = document.createElement('div');
-        line.textContent = escapeHtml(text);
-        fragment.appendChild(line);
-        terminal.appendChild(fragment);
-        terminal.scrollTop = terminal.scrollHeight;
-    }
-}

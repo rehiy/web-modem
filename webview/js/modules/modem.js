@@ -2,8 +2,8 @@
    Modem 管理模块 (Modem Management Module)
    ========================================= */
 
+import { $ } from '../utils/dom.js';
 import { apiRequest, buildQueryString } from '../utils/api.js';
-import { $, addToTerminal } from '../utils/dom.js';
 
 /**
  * Modem管理器类
@@ -79,27 +79,6 @@ export class ModemManager {
     }
 
     /**
-     * 发送AT命令
-     * 向选中的Modem发送自定义AT命令
-     */
-    async sendATCommand() {
-        const cmd = $('#atCommand').value.trim();
-        if (!cmd) {
-            app.logger.error('请输入 AT 命令');
-            return;
-        }
-
-        try {
-            const result = await apiRequest('/modem/send', 'POST', { name: this.name, command: cmd });
-            addToTerminal('terminal', `> ${cmd}`);
-            addToTerminal('terminal', result.response || '');
-            $('#atCommand').value = '';
-        } catch (error) {
-            console.error('发送命令失败:', error);
-        }
-    }
-
-    /**
      * 获取Modem信息
      * 获取当前Modem的设备信息
      */
@@ -122,6 +101,53 @@ export class ModemManager {
         const container = $('#signalInfo');
         container.innerHTML = app.render.render('signalInfo', { signal });
     }
+
+    /* =========================================
+       AT 命令 (AT Commands)
+       ========================================= */
+
+    /**
+     * 发送AT命令
+     * 向选中的Modem发送自定义AT命令
+     */
+    async sendATCommand() {
+        const cmd = $('#atCommand').value.trim();
+        if (!cmd) {
+            app.logger.error('请输入 AT 命令');
+            return;
+        }
+
+        try {
+            const result = await apiRequest('/modem/send', 'POST', { name: this.name, command: cmd });
+            this.addToTerminal('terminal', `> ${cmd}`);
+            this.addToTerminal('terminal', result.response || '');
+            $('#atCommand').value = '';
+        } catch (error) {
+            app.logger.error('发送命令失败:', error);
+        }
+    }
+
+    /**
+     * 向终端添加内容
+     * 向指定的终端元素追加文本内容，并自动滚动到底部
+     * @param {string} elementId - 终端元素的ID
+     * @param {string} text - 要添加的文本内容
+     */
+    addToTerminal(elementId, text) {
+        const terminal = $(`#${elementId}`);
+        if (terminal) {
+            const fragment = document.createDocumentFragment();
+            const line = document.createElement('div');
+            line.textContent = text;
+            fragment.appendChild(line);
+            terminal.appendChild(fragment);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+    }
+
+    /* =========================================
+       短信收发 (SMS Recive/Send)
+       ========================================= */
 
     /**
      * 列出短信

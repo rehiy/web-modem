@@ -34,7 +34,7 @@ export async function apiRequest(endpoint, method = 'GET', body = null) {
 
         return data;
     } catch (error) {
-        console.error(`API请求失败: ${endpoint}`, error);
+        app.logger.error(`API请求失败: ${endpoint}`, error);
         throw error;
     }
 }

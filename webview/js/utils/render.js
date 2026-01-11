@@ -14,8 +14,8 @@ export class UIrender {
      * 构造函数
      * @param {Object} templates - 模板对象
      */
-    constructor(templates = {}) {
-        this.templates = templates;
+    constructor() {
+        this.templates = {};
         this.extractTemplate('modemInfo', 'modemInfo');
         this.extractTemplate('signalInfo', 'signalInfo');
         this.extractTemplate('smsList', 'smsItem');
