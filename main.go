@@ -28,9 +28,8 @@ func main() {
 	defer database.Close()
 
 	// 启动服务器
-	log.Printf("Server starting on :%s", port)
-	
 	go func() {
+		log.Printf("Server starting on :%s", port)
 		log.Fatal(http.ListenAndServe(":"+port, router.Apply()))
 	}()
 
@@ -38,6 +37,6 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
-	
+
 	log.Println("Shutting down server...")
 }
