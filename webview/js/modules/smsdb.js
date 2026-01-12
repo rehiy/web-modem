@@ -27,39 +27,6 @@ export class SmsdbManager {
        ========================================= */
 
     /**
-     * 加载短信存储设置
-     * 获取短信存储功能的启用状态
-     */
-    async loadSmsdbSettings() {
-        try {
-            const settings = await apiRequest('/smsdb/settings');
-            const enabledCheckbox = $('#smsdbEnabled');
-            if (enabledCheckbox) {
-                enabledCheckbox.checked = settings.smsdb_enabled === 'true' || settings.smsdb_enabled === true;
-            }
-        } catch (error) {
-            app.logger.error('加载短信存储设置失败: ' + error);
-        }
-    }
-
-    /**
-     * 更新短信存储设置
-     * 设置短信存储功能的启用状态
-     */
-    async updateSmsdbSettings() {
-        try {
-            const enabledCheckbox = $('#smsdbEnabled');
-            if (!enabledCheckbox) return;
-
-            const enabled = enabledCheckbox.checked;
-            await apiRequest('/smsdb/settings', 'PUT', { smsdb_enabled: enabled });
-            app.logger.success(`数据库存储短信已${enabled ? '启用' : '禁用'}`);
-        } catch (error) {
-            app.logger.error('更新设置失败');
-        }
-    }
-
-    /**
      * 列出短信存储
      * 根据分页和筛选条件获取短信列表
      */

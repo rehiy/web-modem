@@ -23,8 +23,8 @@ func NewSmsdbHandler() *SmsdbHandler {
 	}
 }
 
-// List 获取数据库中的短信列表
-func (h *SmsdbHandler) List(w http.ResponseWriter, r *http.Request) {
+// ListSMS 获取数据库中的短信列表
+func (h *SmsdbHandler) ListSMS(w http.ResponseWriter, r *http.Request) {
 	filter := &models.SMSFilter{}
 
 	// 解析查询参数
@@ -80,8 +80,8 @@ func (h *SmsdbHandler) List(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Delete 删除数据库中的短信
-func (h *SmsdbHandler) Delete(w http.ResponseWriter, r *http.Request) {
+// DeleteSMSBatch 批量删除数据库中的短信
+func (h *SmsdbHandler) DeleteSMSBatch(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		IDs []int `json:"ids"`
 	}
@@ -107,41 +107,8 @@ func (h *SmsdbHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetSettings 获取短信存储设置
-func (h *SmsdbHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
-	settings, err := database.GetSettings()
-	if err != nil {
-		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
-		return
-	}
-
-	respondJSON(w, http.StatusOK, settings)
-}
-
-// UpdateSettings 更新短信存储设置
-func (h *SmsdbHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		SmsdbEnabled bool `json:"smsdb_enabled"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
-		return
-	}
-
-	if err := database.SetSmsdbEnabled(req.SmsdbEnabled); err != nil {
-		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
-		return
-	}
-
-	respondJSON(w, http.StatusOK, H{
-		"status":        "updated",
-		"smsdb_enabled": req.SmsdbEnabled,
-	})
-}
-
-// SyncModemSMS 从指定Modem同步短信到数据库
-func (h *SmsdbHandler) SyncModemSMS(w http.ResponseWriter, r *http.Request) {
+// SyncSMS 从指定Modem同步短信到数据库
+func (h *SmsdbHandler) SyncSMS(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name string `json:"name"`
 	}

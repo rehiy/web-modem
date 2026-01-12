@@ -198,39 +198,6 @@ export class WebhookManager {
        ========================================= */
 
     /**
-     * 加载Webhook设置
-     * 获取Webhook功能的启用状态
-     */
-    async loadWebhookSettings() {
-        try {
-            const settings = await apiRequest('/webhook/settings');
-            const enabledCheckbox = $('#webhookEnabled');
-            if (enabledCheckbox) {
-                enabledCheckbox.checked = settings.webhook_enabled === 'true' || settings.webhook_enabled === true;
-            }
-        } catch (error) {
-            app.logger.error('加载 Webhook 设置失败: ' + error);
-        }
-    }
-
-    /**
-     * 更新Webhook设置
-     * 设置Webhook功能的启用状态
-     */
-    async updateWebhookSettings() {
-        try {
-            const enabledCheckbox = $('#webhookEnabled');
-            if (!enabledCheckbox) return;
-
-            const enabled = enabledCheckbox.checked;
-            await apiRequest('/webhook/settings', 'PUT', { webhook_enabled: enabled });
-            app.logger.success(`Webhook 功能已${enabled ? '启用' : '禁用'}`);
-        } catch (error) {
-            app.logger.error('更新设置失败');
-        }
-    }
-
-    /**
      * 列出Webhook配置
      * 获取所有已配置的Webhook列表
      */

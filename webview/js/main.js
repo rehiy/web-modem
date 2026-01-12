@@ -10,6 +10,7 @@
 import { TabManager } from './modules/tabs.js';
 import { ModemManager } from './modules/modem.js';
 import { SmsdbManager } from './modules/smsdb.js';
+import { SettingManager } from './modules/setting.js';
 import { WebhookManager } from './modules/webhook.js';
 import { WebSocketService } from './modules/websocket.js';
 import { Logger } from './modules/logger.js';
@@ -34,6 +35,7 @@ async function init() {
         app.modemManager = new ModemManager();
         app.smsdbManager = new SmsdbManager();
         app.webhookManager = new WebhookManager();
+        app.settingManager = new SettingManager();
 
         // 初始化标签管理器
         app.tabManager = new TabManager();

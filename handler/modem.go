@@ -20,15 +20,15 @@ func NewModemHandler() *ModemHandler {
 	}
 }
 
-// List 返回可用调制解调器的列表
-func (h *ModemHandler) List(w http.ResponseWriter, r *http.Request) {
+// ListModems 返回可用调制解调器的列表
+func (h *ModemHandler) ListModems(w http.ResponseWriter, r *http.Request) {
 	h.ms.ScanModems()
-	modems := h.ms.GetConnects()
+	modems := h.ms.GetConnList()
 	respondJSON(w, http.StatusOK, modems)
 }
 
-// Command 向调制解调器发送原始 AT 命令
-func (h *ModemHandler) Command(w http.ResponseWriter, r *http.Request) {
+// SendModemCommand 向调制解调器发送原始 AT 命令
+func (h *ModemHandler) SendModemCommand(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name    string `json:"name"`
 		Command string `json:"command"`
@@ -38,7 +38,7 @@ func (h *ModemHandler) Command(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := h.ms.GetConnect(req.Name)
+	conn, err := h.ms.GetConn(req.Name)
 	if conn == nil {
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
 		return
@@ -57,15 +57,15 @@ func (h *ModemHandler) Command(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// BasicInfo 获取调制解调器基本信息
-func (h *ModemHandler) BasicInfo(w http.ResponseWriter, r *http.Request) {
+// GetModemBasicInfo 获取调制解调器基本信息
+func (h *ModemHandler) GetModemBasicInfo(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		respondJSON(w, http.StatusBadRequest, H{"error": "name is empty"})
 		return
 	}
 
-	conn, err := h.ms.GetConnect(name)
+	conn, err := h.ms.GetConn(name)
 	if conn == nil {
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
 		return
@@ -101,15 +101,15 @@ func (h *ModemHandler) BasicInfo(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, info)
 }
 
-// SignalStrength 获取当前信号强度
-func (h *ModemHandler) SignalStrength(w http.ResponseWriter, r *http.Request) {
+// GetModemSignalStrength 获取当前信号强度
+func (h *ModemHandler) GetModemSignalStrength(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		respondJSON(w, http.StatusBadRequest, H{"error": "name is empty"})
 		return
 	}
 
-	conn, err := h.ms.GetConnect(name)
+	conn, err := h.ms.GetConn(name)
 	if conn == nil {
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
 		return
@@ -146,8 +146,8 @@ func (h *ModemHandler) SignalStrength(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// SendSMS 发送短信
-func (h *ModemHandler) SendSMS(w http.ResponseWriter, r *http.Request) {
+// SendModemSMS 发送短信
+func (h *ModemHandler) SendModemSMS(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name    string `json:"name"`
 		Number  string `json:"number"`
@@ -158,7 +158,7 @@ func (h *ModemHandler) SendSMS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := h.ms.GetConnect(req.Name)
+	conn, err := h.ms.GetConn(req.Name)
 	if conn == nil {
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
 		return
@@ -171,15 +171,15 @@ func (h *ModemHandler) SendSMS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ListSMS 获取调制解调器中的所有短信
-func (h *ModemHandler) ListSMS(w http.ResponseWriter, r *http.Request) {
+// ListModemSMS 获取调制解调器中的所有短信
+func (h *ModemHandler) ListModemSMS(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		respondJSON(w, http.StatusBadRequest, H{"error": "name is empty"})
 		return
 	}
 
-	conn, err := h.ms.GetConnect(name)
+	conn, err := h.ms.GetConn(name)
 	if conn == nil {
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
 		return
@@ -194,8 +194,8 @@ func (h *ModemHandler) ListSMS(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, smsList)
 }
 
-// DeleteSMS 删除短信
-func (h *ModemHandler) DeleteSMS(w http.ResponseWriter, r *http.Request) {
+// DeleteModemSMS 删除短信
+func (h *ModemHandler) DeleteModemSMS(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name    string `json:"name"`
 		Indices []int  `json:"indices"`
@@ -205,7 +205,7 @@ func (h *ModemHandler) DeleteSMS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := h.ms.GetConnect(req.Name)
+	conn, err := h.ms.GetConn(req.Name)
 	if conn == nil {
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
 		return

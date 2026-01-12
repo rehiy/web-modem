@@ -83,8 +83,8 @@ func (m *ModemService) ScanModems(devs ...string) {
 	}
 }
 
-// GetConnects 返回已连接的端口信息
-func (m *ModemService) GetConnects() []*ModemConn {
+// GetConnList 返回已连接的端口信息
+func (m *ModemService) GetConnList() []*ModemConn {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -95,8 +95,8 @@ func (m *ModemService) GetConnects() []*ModemConn {
 	return conns
 }
 
-// GetConnect 返回给定端口名称的 AT 接口
-func (m *ModemService) GetConnect(u string) (*ModemConn, error) {
+// GetConn 返回给定端口名称的 AT 接口
+func (m *ModemService) GetConn(u string) (*ModemConn, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -112,8 +112,8 @@ func (m *ModemService) GetConnect(u string) (*ModemConn, error) {
 }
 
 // handleIncomingSMS 处理指定端口的新接收短信
-func (m *ModemService) handleIncomingSMS(portName string, smsIndex int, webhookService *WebhookService) {
-	conn, err := m.GetConnect(portName)
+func (m *ModemService) handleIncomingSMS(portName string, smsIndex int) {
+	conn, err := m.GetConn(portName)
 	if err != nil {
 		log.Printf("[%s] Failed to get connection for incoming SMS: %v", portName, err)
 		return
@@ -126,6 +126,9 @@ func (m *ModemService) handleIncomingSMS(portName string, smsIndex int, webhookS
 		return
 	}
 
+	smsdbService := NewSmsdbService()
+	webhookService := NewWebhookService()
+
 	// 处理每条短信
 	for _, sms := range smsList {
 		hasNewSMS := false
@@ -135,16 +138,12 @@ func (m *ModemService) handleIncomingSMS(portName string, smsIndex int, webhookS
 				break
 			}
 		}
-		if !hasNewSMS {
-			continue
+		if hasNewSMS {
+			log.Printf("[%s] New SMS from %s: %s", portName, sms.PhoneNumber, sms.Text)
+			modelSMS := atSMSToModelSMS(sms, conn.PhoneNumber, conn.Name)
+			smsdbService.HandleIncomingSMS(modelSMS)
+			webhookService.HandleIncomingSMS(modelSMS)
 		}
-		go func(smsData at.SMS) {
-			modelSMS := atSMSToModelSMS(smsData, conn.PhoneNumber, conn.Name)
-			if err := webhookService.HandleIncomingSMS(modelSMS); err != nil {
-				log.Printf("[%s] Failed to handle incoming SMS: %v", portName, err)
-			}
-			log.Printf("[%s] New SMS from %s: %s", portName, smsData.PhoneNumber, smsData.Text)
-		}(sms)
 	}
 }
 
@@ -174,8 +173,7 @@ func (m *ModemService) makeConnect(u string) error {
 		if e == "+CMTI" && len(p) > 0 {
 			if indexStr, ok := p[1]; ok {
 				if index, err := strconv.Atoi(indexStr); err == nil {
-					w := NewWebhookService()
-					m.handleIncomingSMS(n, index, w)
+					m.handleIncomingSMS(n, index)
 				}
 			}
 		}

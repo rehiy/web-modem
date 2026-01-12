@@ -83,18 +83,9 @@ func createTables() error {
 		return fmt.Errorf("failed to auto migrate: %w", err)
 	}
 
-	// 插入默认设置
-	defaultSettings := map[string]string{
-		"smsdb_enabled":   "true",
-		"webhook_enabled": "false",
-	}
-
-	for key, value := range defaultSettings {
-		setting := models.Setting{Key: key, Value: value}
-		result := db.FirstOrCreate(&setting, models.Setting{Key: key})
-		if result.Error != nil {
-			return fmt.Errorf("failed to insert default setting: %w", result.Error)
-		}
+	// 初始化默认设置
+	if err := InitDefaultSettings(); err != nil {
+		return fmt.Errorf("failed to init default settings: %w", err)
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/rehiy/web-modem/database"
+	"github.com/rehiy/web-modem/models"
 )
 
 // SmsdbService 短信数据库服务
@@ -20,9 +21,9 @@ func NewSmsdbService() *SmsdbService {
 }
 
 // SyncSMSToDB 从指定Modem同步所有短信到数据库
-func (s *SmsdbService) SyncSMSToDB(modemName string) (map[string]interface{}, error) {
+func (s *SmsdbService) SyncSMSToDB(modemName string) (map[string]any, error) {
 	// 获取连接
-	conn, err := s.modemService.GetConnect(modemName)
+	conn, err := s.modemService.GetConn(modemName)
 	if err != nil {
 		return nil, fmt.Errorf("获取连接失败: %v", err)
 	}
@@ -42,13 +43,13 @@ func (s *SmsdbService) SyncSMSToDB(modemName string) (map[string]interface{}, er
 		modelSMS := atSMSToModelSMS(smsData, conn.PhoneNumber, modemName)
 
 		// 检查是否已存在
-		if res, err := database.GetSMSByIDs(smsData.Indices); err == nil && len(res) > 0 {
+		if res, err := database.GetSMSListByIDs(smsData.Indices); err == nil && len(res) > 0 {
 			log.Printf("[%s] SMS already exists in database, skipping: %s", modemName, res[0].SMSIDs)
 			continue
 		}
 
 		// 保存到数据库
-		if err := database.SaveSMS(modelSMS); err != nil {
+		if err := database.CreateSMS(modelSMS); err != nil {
 			log.Printf("[%s] Failed to save SMS to database: %v", modemName, err)
 			continue
 		}
@@ -57,9 +58,25 @@ func (s *SmsdbService) SyncSMSToDB(modemName string) (map[string]interface{}, er
 		log.Printf("[%s] Synced SMS from %s to database: %s", modemName, smsData.PhoneNumber, smsData.Text)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"modemName":  modemName,
 		"totalCount": totalCount,
 		"newCount":   newCount,
 	}, nil
+}
+
+// HandleIncomingSMS 处理接收到的短信：保存到数据库
+func (w *SmsdbService) HandleIncomingSMS(smsData *models.SMS) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[Webhook] Panic recovered: %v", r)
+			}
+		}()
+		if database.IsSmsdbEnabled() {
+			if err := database.CreateSMS(smsData); err != nil {
+				log.Printf("[SMS] Failed to save incoming SMS: %v", err)
+			}
+		}
+	}()
 }

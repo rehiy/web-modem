@@ -53,14 +53,18 @@ export class TabManager {
                 }
                 break;
             case 'smsdb':
+                if (app.settingManager) {
+                    app.settingManager.loadSettings();
+                }
                 if (app.smsdbManager) {
-                    app.smsdbManager.loadSmsdbSettings();
                     app.smsdbManager.listSmsdb();
                 }
                 break;
             case 'webhook':
+                if (app.settingManager) {
+                    app.settingManager.loadSettings();
+                }
                 if (app.webhookManager) {
-                    app.webhookManager.loadWebhookSettings();
                     app.webhookManager.listWebhooks();
                 }
                 break;

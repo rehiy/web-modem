@@ -22,8 +22,8 @@ func NewWebhookHandler() *WebhookHandler {
 	}
 }
 
-// Create 创建Webhook配置
-func (h *WebhookHandler) Create(w http.ResponseWriter, r *http.Request) {
+// CreateWebhook 创建Webhook配置
+func (h *WebhookHandler) CreateWebhook(w http.ResponseWriter, r *http.Request) {
 	var webhook models.Webhook
 	if err := json.NewDecoder(r.Body).Decode(&webhook); err != nil {
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
@@ -41,7 +41,7 @@ func (h *WebhookHandler) Create(w http.ResponseWriter, r *http.Request) {
 		webhook.Template = "{}"
 	}
 
-	if err := database.Create(&webhook); err != nil {
+	if err := database.CreateWebhook(&webhook); err != nil {
 		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
 		return
 	}
@@ -49,8 +49,8 @@ func (h *WebhookHandler) Create(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, webhook)
 }
 
-// Update 更新Webhook配置
-func (h *WebhookHandler) Update(w http.ResponseWriter, r *http.Request) {
+// UpdateWebhook 更新Webhook配置
+func (h *WebhookHandler) UpdateWebhook(w http.ResponseWriter, r *http.Request) {
 	vars := r.URL.Query()
 	idStr := vars.Get("id")
 	if idStr == "" {
@@ -83,7 +83,7 @@ func (h *WebhookHandler) Update(w http.ResponseWriter, r *http.Request) {
 		webhook.Template = "{}"
 	}
 
-	if err := database.Update(&webhook); err != nil {
+	if err := database.UpdateWebhook(&webhook); err != nil {
 		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
 		return
 	}
@@ -91,8 +91,8 @@ func (h *WebhookHandler) Update(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, webhook)
 }
 
-// Delete 删除Webhook配置
-func (h *WebhookHandler) Delete(w http.ResponseWriter, r *http.Request) {
+// DeleteWebhook 删除Webhook配置
+func (h *WebhookHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
 	vars := r.URL.Query()
 	idStr := vars.Get("id")
 	if idStr == "" {
@@ -106,7 +106,7 @@ func (h *WebhookHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := database.Delete(id); err != nil {
+	if err := database.DeleteWebhook(id); err != nil {
 		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
 		return
 	}
@@ -117,8 +117,8 @@ func (h *WebhookHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Detail 获取单个Webhook配置
-func (h *WebhookHandler) Detail(w http.ResponseWriter, r *http.Request) {
+// GetWebhook 获取单个Webhook配置
+func (h *WebhookHandler) GetWebhook(w http.ResponseWriter, r *http.Request) {
 	vars := r.URL.Query()
 	idStr := vars.Get("id")
 	if idStr == "" {
@@ -132,7 +132,7 @@ func (h *WebhookHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	webhook, err := database.Detail(id)
+	webhook, err := database.GetWebhook(id)
 	if err != nil {
 		respondJSON(w, http.StatusNotFound, H{"error": err.Error()})
 		return
@@ -141,9 +141,9 @@ func (h *WebhookHandler) Detail(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, webhook)
 }
 
-// List 获取所有Webhook配置
-func (h *WebhookHandler) List(w http.ResponseWriter, r *http.Request) {
-	webhooks, err := database.GetAllWebhooks()
+// ListWebhooks 获取所有Webhook配置
+func (h *WebhookHandler) ListWebhooks(w http.ResponseWriter, r *http.Request) {
+	webhooks, err := database.GetWebhookList()
 	if err != nil {
 		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
 		return
@@ -152,8 +152,8 @@ func (h *WebhookHandler) List(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, webhooks)
 }
 
-// Test 测试Webhook
-func (h *WebhookHandler) Test(w http.ResponseWriter, r *http.Request) {
+// TestWebhook 测试Webhook
+func (h *WebhookHandler) TestWebhook(w http.ResponseWriter, r *http.Request) {
 	vars := r.URL.Query()
 	idStr := vars.Get("id")
 	if idStr == "" {
@@ -167,13 +167,13 @@ func (h *WebhookHandler) Test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	webhook, err := database.Detail(id)
+	webhook, err := database.GetWebhook(id)
 	if err != nil {
 		respondJSON(w, http.StatusNotFound, H{"error": err.Error()})
 		return
 	}
 
-	if err := h.ws.Test(webhook); err != nil {
+	if err := h.ws.TestWebhook(webhook); err != nil {
 		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
 		return
 	}
@@ -181,38 +181,5 @@ func (h *WebhookHandler) Test(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, H{
 		"status":  "success",
 		"message": "Webhook test sent successfully",
-	})
-}
-
-// DetailSettings 获取Webhook设置
-func (h *WebhookHandler) DetailSettings(w http.ResponseWriter, r *http.Request) {
-	settings, err := database.GetSettings()
-	if err != nil {
-		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
-		return
-	}
-
-	respondJSON(w, http.StatusOK, settings)
-}
-
-// UpdateSettings 更新Webhook设置
-func (h *WebhookHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		WebhookEnabled bool `json:"webhook_enabled"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
-		return
-	}
-
-	if err := database.SetWebhookEnabled(req.WebhookEnabled); err != nil {
-		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
-		return
-	}
-
-	respondJSON(w, http.StatusOK, H{
-		"status":          "updated",
-		"webhook_enabled": req.WebhookEnabled,
 	})
 }

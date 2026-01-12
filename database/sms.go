@@ -10,8 +10,8 @@ import (
 	"github.com/rehiy/web-modem/models"
 )
 
-// SaveSMS 保存短信到数据库
-func SaveSMS(sms *models.SMS) error {
+// CreateSMS 保存短信到数据库
+func CreateSMS(sms *models.SMS) error {
 	// 确保必要字段已设置
 	if sms.Direction == "" {
 		sms.Direction = "in"
@@ -25,6 +25,46 @@ func SaveSMS(sms *models.SMS) error {
 		return fmt.Errorf("failed to save SMS: %w", err)
 	}
 	return nil
+}
+
+// DeleteSMS 根据数据库ID删除短信
+func DeleteSMS(id int) error {
+	ret := db.Delete(&models.SMS{}, id)
+	if ret.Error != nil {
+		return fmt.Errorf("failed to delete SMS: %w", ret.Error)
+	}
+	if ret.RowsAffected == 0 {
+		return fmt.Errorf("SMS not found")
+	}
+	return nil
+}
+
+// BatchDeleteSMS 批量删除短信
+func BatchDeleteSMS(ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	err := db.Where("id IN ?", ids).Delete(&models.SMS{}).Error
+	if err != nil {
+		return fmt.Errorf("failed to batch delete SMS: %w", err)
+	}
+	return nil
+}
+
+// GetSMSListByIDs 根据短信模块的ID查询
+func GetSMSListByIDs(smsIDs []int) ([]models.SMS, error) {
+	if len(smsIDs) == 0 {
+		return []models.SMS{}, nil
+	}
+
+	var smsList []models.SMS
+	str := IntArrayToString(smsIDs)
+	err := db.Where("sms_ids = ?", str).Order("receive_time DESC").Find(&smsList).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to query SMS by IDs: %w", err)
+	}
+	return smsList, nil
 }
 
 // GetSMSList 查询短信列表
@@ -62,85 +102,6 @@ func GetSMSList(filter *models.SMSFilter) ([]models.SMS, int, error) {
 	}
 
 	return smsList, int(total), nil
-}
-
-// DeleteSMSByID 根据数据库ID删除短信
-func DeleteSMSByID(id int) error {
-	ret := db.Delete(&models.SMS{}, id)
-	if ret.Error != nil {
-		return fmt.Errorf("failed to delete SMS: %w", ret.Error)
-	}
-	if ret.RowsAffected == 0 {
-		return fmt.Errorf("SMS not found")
-	}
-	return nil
-}
-
-// BatchDeleteSMS 批量删除短信
-func BatchDeleteSMS(ids []int) error {
-	if len(ids) == 0 {
-		return nil
-	}
-	err := db.Where("id IN ?", ids).Delete(&models.SMS{}).Error
-	if err != nil {
-		return fmt.Errorf("failed to batch delete SMS: %w", err)
-	}
-	return nil
-}
-
-// GetSMSByIDs 根据短信模块的ID查询
-func GetSMSByIDs(smsIDs []int) ([]models.SMS, error) {
-	if len(smsIDs) == 0 {
-		return []models.SMS{}, nil
-	}
-
-	var smsList []models.SMS
-	str := IntArrayToString(smsIDs)
-	err := db.Where("sms_ids = ?", str).Order("receive_time DESC").Find(&smsList).Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to query SMS by IDs: %w", err)
-	}
-	return smsList, nil
-}
-
-// IsSmsdbEnabled 检查是否启用了数据库存储短信
-func IsSmsdbEnabled() bool {
-	var setting models.Setting
-	err := db.Where("key = ?", "smsdb_enabled").First(&setting).Error
-	if err != nil {
-		return false
-	}
-	return setting.Value == "true"
-}
-
-// GetSettings 获取所有设置
-func GetSettings() (map[string]string, error) {
-	var settings []models.Setting
-	if err := db.Find(&settings).Error; err != nil {
-		return nil, fmt.Errorf("failed to get settings: %w", err)
-	}
-
-	result := make(map[string]string)
-	for _, setting := range settings {
-		result[setting.Key] = setting.Value
-	}
-
-	return result, nil
-}
-
-// SetSmsdbEnabled 设置短信存储启用状态
-func SetSmsdbEnabled(enabled bool) error {
-	value := "false"
-	if enabled {
-		value = "true"
-	}
-
-	setting := models.Setting{Key: "smsdb_enabled", Value: value}
-	err := db.Where(models.Setting{Key: "smsdb_enabled"}).Assign(setting).FirstOrCreate(&setting).Error
-	if err != nil {
-		return fmt.Errorf("failed to set smsdb_enabled: %w", err)
-	}
-	return nil
 }
 
 // IntArrayToString 将int数组转换为字符串

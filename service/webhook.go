@@ -40,7 +40,7 @@ func (w *WebhookService) getCachedWebhooks() ([]models.Webhook, error) {
 	webhookCacheMux.RUnlock()
 
 	// 缓存过期或为空，重新查询
-	webhooks, err := database.GetEnabledWebhooks()
+	webhooks, err := database.GetEnabledWebhookList()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get enabled webhooks: %w", err)
 	}
@@ -164,7 +164,7 @@ func (w *WebhookService) preparePayload(webhook *models.Webhook, sms *models.SMS
 	}
 
 	// 尝试解析模板
-	var template map[string]interface{}
+	var template map[string]any
 	if err := json.Unmarshal([]byte(webhook.Template), &template); err != nil {
 		// 如果模板解析失败，使用默认模板
 		log.Printf("[Webhook] Invalid template for %s, using default: %v", webhook.Name, err)
@@ -179,9 +179,9 @@ func (w *WebhookService) preparePayload(webhook *models.Webhook, sms *models.SMS
 
 // getDefaultPayload 获取默认payload
 func (w *WebhookService) getDefaultPayload(sms *models.SMS) ([]byte, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"event": "sms_received",
-		"data": map[string]interface{}{
+		"data": map[string]any{
 			"id":             sms.ID,
 			"content":        sms.Content,
 			"sms_ids":        sms.SMSIDs,
@@ -197,14 +197,14 @@ func (w *WebhookService) getDefaultPayload(sms *models.SMS) ([]byte, error) {
 }
 
 // replaceTemplateVariables 替换模板中的变量
-func (w *WebhookService) replaceTemplateVariables(template map[string]interface{}, sms *models.SMS) map[string]interface{} {
-	result := make(map[string]interface{})
+func (w *WebhookService) replaceTemplateVariables(template map[string]any, sms *models.SMS) map[string]any {
+	result := make(map[string]any)
 
 	for key, value := range template {
 		switch v := value.(type) {
 		case string:
 			result[key] = w.replaceStringVariables(v, sms)
-		case map[string]interface{}:
+		case map[string]any:
 			result[key] = w.replaceTemplateVariables(v, sms)
 		default:
 			result[key] = value
@@ -232,8 +232,8 @@ func (w *WebhookService) replaceStringVariables(s string, sms *models.SMS) strin
 	return s
 }
 
-// Test 测试webhook
-func (w *WebhookService) Test(webhook *models.Webhook) error {
+// TestWebhook 测试webhook
+func (w *WebhookService) TestWebhook(webhook *models.Webhook) error {
 	testSMS := &models.SMS{
 		ID:            0,
 		Content:       "Test webhook message",
@@ -247,28 +247,18 @@ func (w *WebhookService) Test(webhook *models.Webhook) error {
 	return w.triggerWebhook(webhook, testSMS)
 }
 
-// HandleIncomingSMS 处理接收到的短信，保存到数据库并异步触发webhook
-func (w *WebhookService) HandleIncomingSMS(smsData *models.SMS) error {
-	// 异步处理，避免阻塞短信接收
+// HandleIncomingSMS 处理接收到的短信：触发 webhook
+func (w *WebhookService) HandleIncomingSMS(smsData *models.SMS) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("[Webhook] Panic recovered: %v", r)
 			}
 		}()
-
-		// 保存到数据库
-		if err := database.SaveSMS(smsData); err != nil {
-			log.Printf("[SMS] Failed to save incoming SMS: %v", err)
-		}
-
-		// 如果webhook启用，触发webhook
 		if database.IsWebhookEnabled() {
 			if err := w.TriggerWebhooks(smsData); err != nil {
 				log.Printf("[Webhook] Failed to trigger webhooks: %v", err)
 			}
 		}
 	}()
-
-	return nil
 }
