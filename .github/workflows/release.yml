@@ -1,4 +1,4 @@
-name: TDP Cloud Builder
+name: Release Builder
 
 on:
   push:
