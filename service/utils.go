@@ -9,13 +9,13 @@ import (
 )
 
 // atSMSToModelSMS 将AT短信转换为数据库模型
-func atSMSToModelSMS(smsData at.SMS, receiveNumber string, modemName string) *models.SMS {
+func atSMSToModelSMS(atSMS at.SMS, receiveNumber string, modemName string) *models.SMS {
 	return &models.SMS{
-		Content:       smsData.Text,
-		SMSIDs:        database.IntArrayToString(smsData.Indices),
-		ReceiveTime:   parseSMSTime(smsData.Time),
+		Content:       atSMS.Text,
+		SMSIDs:        database.IntArrayToString(atSMS.Indices),
+		ReceiveTime:   parseSMSTime(atSMS.Time),
 		ReceiveNumber: receiveNumber,
-		SendNumber:    smsData.PhoneNumber,
+		SendNumber:    atSMS.Number,
 		Direction:     "in",
 		ModemName:     modemName,
 	}

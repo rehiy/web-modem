@@ -24,10 +24,10 @@ var (
 
 // ModemConn 端口连接
 type ModemConn struct {
-	Name        string `json:"name"`
-	PhoneNumber string `json:"phoneNumber"`
-	Connected   bool   `json:"connected"`
-	*at.Device  `json:"-"`
+	Name       string `json:"name"`
+	Number     string `json:"number"`
+	Connected  bool   `json:"connected"`
+	*at.Device `json:"-"`
 }
 
 // ModemService 管理多个串口连接
@@ -139,8 +139,8 @@ func (m *ModemService) handleIncomingSMS(portName string, smsIndex int) {
 			}
 		}
 		if hasNewSMS {
-			log.Printf("[%s] New SMS from %s: %s", portName, sms.PhoneNumber, sms.Text)
-			modelSMS := atSMSToModelSMS(sms, conn.PhoneNumber, conn.Name)
+			log.Printf("[%s] New SMS from %s: %s", portName, sms.Number, sms.Text)
+			modelSMS := atSMSToModelSMS(sms, conn.Number, conn.Name)
 			smsdbService.HandleIncomingSMS(modelSMS)
 			webhookService.HandleIncomingSMS(modelSMS)
 		}
@@ -205,16 +205,16 @@ func (m *ModemService) makeConnect(u string) error {
 
 	// 添加到连接池
 	m.pool[n] = &ModemConn{
-		Name:        n,
-		PhoneNumber: "unkown",
-		Connected:   true,
-		Device:      modem,
+		Name:      n,
+		Number:    "unkown",
+		Connected: true,
+		Device:    modem,
 	}
 
 	// 获取手机号，用于接收号码
-	if phone, _, err := modem.GetPhoneNumber(); err == nil {
-		pf("connected, phone number: %s", phone)
-		m.pool[n].PhoneNumber = phone
+	if number, _, err := modem.GetNumber(); err == nil {
+		pf("connected, phone number: %s", number)
+		m.pool[n].Number = number
 	} else {
 		pf("connected, but failed to get phone number: %v", err)
 	}

@@ -81,21 +81,21 @@ func (h *ModemHandler) GetModemBasicInfo(w http.ResponseWriter, r *http.Request)
 		info["model"] = model
 	}
 	// 获取IMEI/序列号
-	if imei, err := conn.GetSerialNumber(); err == nil {
+	if imei, err := conn.GetIMEI(); err == nil {
 		info["imei"] = imei
 	}
 	// 获取IMSI
 	if imsi, err := conn.GetIMSI(); err == nil {
 		info["imsi"] = imsi
 	}
+	// 获取手机号
+	if number, _, err := conn.GetNumber(); err == nil {
+		info["number"] = number
+	}
 	// 获取运营商
 	if _, _, operator, act, err := conn.GetOperator(); err == nil {
 		info["operator"] = operator
 		info["act"] = act
-	}
-	// 获取手机号
-	if phone, _, err := conn.GetPhoneNumber(); err == nil {
-		info["phone"] = phone
 	}
 
 	respondJSON(w, http.StatusOK, info)

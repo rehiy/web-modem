@@ -248,7 +248,7 @@ func (w *WebhookService) TestWebhook(webhook *models.Webhook) error {
 }
 
 // HandleIncomingSMS 处理接收到的短信：触发 webhook
-func (w *WebhookService) HandleIncomingSMS(smsData *models.SMS) {
+func (w *WebhookService) HandleIncomingSMS(dbSMS *models.SMS) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -256,7 +256,7 @@ func (w *WebhookService) HandleIncomingSMS(smsData *models.SMS) {
 			}
 		}()
 		if database.IsWebhookEnabled() {
-			if err := w.TriggerWebhooks(smsData); err != nil {
+			if err := w.TriggerWebhooks(dbSMS); err != nil {
 				log.Printf("[Webhook] Failed to trigger webhooks: %v", err)
 			}
 		}

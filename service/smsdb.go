@@ -38,12 +38,12 @@ func (s *SmsdbService) SyncSMSToDB(modemName string) (map[string]any, error) {
 	newCount := 0
 
 	// 同步每条短信
-	for _, smsData := range smsList {
+	for _, atSMS := range smsList {
 		// 转换为数据库模型
-		modelSMS := atSMSToModelSMS(smsData, conn.PhoneNumber, modemName)
+		modelSMS := atSMSToModelSMS(atSMS, conn.Number, modemName)
 
 		// 检查是否已存在
-		if res, err := database.GetSMSListByIDs(smsData.Indices); err == nil && len(res) > 0 {
+		if res, err := database.GetSMSListByIDs(atSMS.Indices); err == nil && len(res) > 0 {
 			log.Printf("[%s] SMS already exists in database, skipping: %s", modemName, res[0].SMSIDs)
 			continue
 		}
@@ -55,7 +55,7 @@ func (s *SmsdbService) SyncSMSToDB(modemName string) (map[string]any, error) {
 		}
 
 		newCount++
-		log.Printf("[%s] Synced SMS from %s to database: %s", modemName, smsData.PhoneNumber, smsData.Text)
+		log.Printf("[%s] Synced SMS from %s to database: %s", modemName, atSMS.Number, atSMS.Text)
 	}
 
 	return map[string]any{
@@ -66,7 +66,7 @@ func (s *SmsdbService) SyncSMSToDB(modemName string) (map[string]any, error) {
 }
 
 // HandleIncomingSMS 处理接收到的短信：保存到数据库
-func (w *SmsdbService) HandleIncomingSMS(smsData *models.SMS) {
+func (w *SmsdbService) HandleIncomingSMS(dbSMS *models.SMS) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -74,7 +74,7 @@ func (w *SmsdbService) HandleIncomingSMS(smsData *models.SMS) {
 			}
 		}()
 		if database.IsSmsdbEnabled() {
-			if err := database.CreateSMS(smsData); err != nil {
+			if err := database.CreateSMS(dbSMS); err != nil {
 				log.Printf("[SMS] Failed to save incoming SMS: %v", err)
 			}
 		}
