@@ -35,15 +35,31 @@ export class Logger {
     }
 
     /**
-     * 记录日志
-     * @param {string} text - 日志文本
-     * @param {string} type - 日志类型 (info, error, success)
+     * 清空日志
      */
-    log(text, type = 'info') {
+    clear() {
+        if (this.container) {
+            this.container.innerHTML = '';
+        }
+    }
+
+    /**
+     * 记录日志
+     */
+    log(...args) {
         if (!this.container) return;
 
+        const type = (typeof args[args.length - 1] === 'string' &&
+            ['info', 'error', 'success'].includes(args[args.length - 1]))
+            ? args.pop()
+            : 'info';
+
+        const text = args.map(arg => (
+            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        )).join(' ');
+
         const timestamp = new Date().toLocaleTimeString();
-        const prefix = type === 'error' ? '❌ 错误: ' : type === 'success' ? '✅ 成功: ' : '';
+        const prefix = type === 'error' ? '错误: ' : type === 'success' ? '成功: ' : '';
 
         const logEntry = document.createElement('div');
         logEntry.className = `log-entry ${type}`;
@@ -55,34 +71,22 @@ export class Logger {
 
     /**
      * 记录信息日志
-     * @param {string} text - 日志文本
      */
-    info(text) {
-        this.log(text, 'info');
+    info(...args) {
+        this.log(...args, 'info');
     }
 
     /**
      * 记录错误日志
-     * @param {string} text - 日志文本
      */
-    error(text) {
-        this.log(text, 'error');
+    error(...args) {
+        this.log(...args, 'error');
     }
 
     /**
      * 记录成功日志
-     * @param {string} text - 日志文本
      */
-    success(text) {
-        this.log(text, 'success');
-    }
-
-    /**
-     * 清空日志
-     */
-    clear() {
-        if (this.container) {
-            this.container.innerHTML = '';
-        }
+    success(...args) {
+        this.log(...args, 'success');
     }
 }

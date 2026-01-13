@@ -2,8 +2,6 @@
    WebSocket 服务模块 (WebSocket Service Module)
    ========================================= */
 
-
-
 /**
  * WebSocket服务类
  * 负责管理WebSocket连接和事件分发
@@ -17,6 +15,7 @@ export class WebSocketService {
         this.ws = null;
         this.eventListeners = new Map();
         this.reconnectTimeout = null;
+        this.pingInterval = null;
         this.connect(`ws://${location.host}/ws/modem`);
     }
 
@@ -33,8 +32,8 @@ export class WebSocketService {
             this.ws = new WebSocket(url);
             this.setupEventListeners();
         } catch (error) {
-            app.logger.error('WebSocket连接失败:', error);
             this.scheduleReconnect(url);
+            app.logger.error('WebSocket连接失败:', error);
         }
     }
 
@@ -48,7 +47,9 @@ export class WebSocketService {
         };
 
         this.ws.onmessage = (event) => {
-            this.emit('message', event.data);
+            console.log(event.data)
+            //  app.logger.info('WebSocket 消息:', event.data);
+            this.emit('message', event);
         };
 
         this.ws.onerror = (error) => {
@@ -56,10 +57,10 @@ export class WebSocketService {
             this.emit('error', error);
         };
 
-        this.ws.onclose = () => {
+        this.ws.onclose = (event) => {
+            this.scheduleReconnect(this.ws.url);
             app.logger.info('WebSocket 已断开');
             this.emit('disconnected');
-            this.scheduleReconnect(this.ws.url);
         };
     }
 
@@ -97,13 +98,14 @@ export class WebSocketService {
      */
     emit(event, data) {
         if (this.eventListeners.has(event)) {
-            this.eventListeners.get(event).forEach(callback => {
+            const listeners = this.eventListeners.get(event);
+            for (const callback of listeners) {
                 try {
                     callback(data);
                 } catch (error) {
-                    app.logger.error(`WebSocket事件处理错误 (${event}):`, error);
+                    console.error(`WebSocket事件处理错误 (${event}):`, error);
                 }
-            });
+            }
         }
     }
 

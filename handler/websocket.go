@@ -35,7 +35,6 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 
 	log.Printf("WebSocket client connected: %s", r.RemoteAddr)
 
-	// 直接推送Modem事件到客户端
 	for {
 		select {
 		case event, ok := <-service.ModemEvent:
@@ -43,16 +42,13 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 				log.Printf("WebSocket: ModemEvent channel closed")
 				return
 			}
-			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := conn.WriteMessage(websocket.TextMessage, []byte(event)); err != nil {
-				log.Printf("WebSocket write error: %v", err)
+				log.Printf("WebSocket client disconnected: %v", r.RemoteAddr)
 				return
 			}
 		case <-time.After(30 * time.Second):
-			// 发送ping保持连接
-			conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Printf("WebSocket ping error: %v", err)
+				log.Printf("WebSocket client disconnected: %v", r.RemoteAddr)
 				return
 			}
 		}

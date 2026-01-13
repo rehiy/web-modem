@@ -168,7 +168,7 @@ func (m *ModemService) makeConnect(u string) error {
 
 	// 创建事件处理函数，写入 ModemEvent 并处理短信
 	hf := func(e string, p map[int]string) {
-		ModemEvent <- fmt.Sprintf("[%s] urc:%s %v", n, e, p)
+		ModemEvent <- fmt.Sprintf("%s, %s, %v", n, e, p)
 		// 处理收到的短信通知
 		if e == "+CMTI" && len(p) > 0 {
 			if indexStr, ok := p[1]; ok {
