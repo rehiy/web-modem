@@ -3,14 +3,17 @@
  * 负责初始化所有模块并管理应用生命周期
  */
 
-import { TabManager } from './modules/tabs.js';
-import { ModemManager } from './modules/modem.js';
-import { SmsdbManager } from './modules/smsdb.js';
-import { SettingManager } from './modules/setting.js';
-import { WebhookManager } from './modules/webhook.js';
-import { WebSocketService } from './modules/websocket.js';
 import { Logger } from './modules/logger.js';
 import { UIrender } from './utils/render.js';
+
+import { ModemManager } from './modules/modem.js';
+import { SmsdbManager } from './modules/smsdb.js';
+import { WebhookManager } from './modules/webhook.js';
+import { SettingManager } from './modules/setting.js';
+
+import { TabManager } from './modules/tabs.js';
+
+import { WebSocketService } from './modules/websocket.js';
 
 // 全局应用对象
 window.app = {};
@@ -21,13 +24,13 @@ window.app = {};
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        // 初始化全局日志面板
+        // 初始化全局日志
         app.logger = new Logger();
 
         // 初始化全局渲染器
         app.render = new UIrender();
 
-        // 初始化各个功能管理器
+        // 初始化功能管理器
         app.modemManager = new ModemManager();
         app.smsdbManager = new SmsdbManager();
         app.webhookManager = new WebhookManager();
