@@ -166,9 +166,13 @@ func (m *ModemService) makeConnect(u string) error {
 		conn.Close()
 	}
 
-	// 创建事件处理函数，写入 ModemEvent 并处理短信
+	// 创建事件处理函数
 	hf := func(e string, p map[int]string) {
-		ModemEvent <- fmt.Sprintf("%s, %s, %v", n, e, p)
+		select {
+		case ModemEvent <- fmt.Sprintf("%s, %s, %v", n, e, p):
+		default:
+			log.Printf("[%s] urc dropped: %s", n, e)
+		}
 		// 处理收到的短信通知
 		if e == "+CMTI" && len(p) > 0 {
 			if indexStr, ok := p[1]; ok {
