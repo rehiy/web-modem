@@ -1,7 +1,3 @@
-/* =========================================
-   Modem 管理模块 (Modem Management Module)
-   ========================================= */
-
 import { $ } from '../utils/dom.js';
 import { apiRequest, buildQueryString } from '../utils/api.js';
 

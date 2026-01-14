@@ -1,13 +1,8 @@
-/* =========================================
-   WebSocket 服务模块 (WebSocket Service Module)
-   ========================================= */
-
 /**
  * WebSocket服务类
  * 负责管理WebSocket连接和事件分发
  */
 export class WebSocketService {
-
     /**
      * 构造函数
      */
@@ -38,29 +33,43 @@ export class WebSocketService {
     }
 
     /**
+     * 断开连接
+     */
+    disconnect() {
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
+    }
+
+    /**
      * 设置事件监听器
      */
     setupEventListeners() {
-        this.ws.onopen = () => {
+        this.ws.onopen = async () => {
             app.logger.info('WebSocket 已连接');
             this.emit('connected');
         };
 
-        this.ws.onmessage = (event) => {
-            console.log(event.data)
-            //  app.logger.info('WebSocket 消息:', event.data);
+        this.ws.onmessage = async (event) => {
+            app.logger.info('WebSocket 消息:', event.data);
             this.emit('message', event);
         };
 
-        this.ws.onerror = (error) => {
-            app.logger.error('WebSocket 错误:', error);
-            this.emit('error', error);
+        this.ws.onerror = async (error) => {
+            app.logger.error('WebSocket 错误:', error.message);
+            this.emit('error', error.message);
         };
 
-        this.ws.onclose = (event) => {
+        this.ws.onclose = async (event) => {
+            app.logger.info('WebSocket 已断开', event.reason);
+            this.emit('disconnected', event.reason);
             this.scheduleReconnect(this.ws.url);
-            app.logger.info('WebSocket 已断开');
-            this.emit('disconnected');
         };
     }
 
@@ -117,21 +126,6 @@ export class WebSocketService {
         if (this.ws?.readyState === WebSocket.OPEN) {
             const message = typeof data === 'object' ? JSON.stringify(data) : data;
             this.ws.send(message);
-        }
-    }
-
-    /**
-     * 断开连接
-     */
-    disconnect() {
-        if (this.reconnectTimeout) {
-            clearTimeout(this.reconnectTimeout);
-            this.reconnectTimeout = null;
-        }
-
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
         }
     }
 

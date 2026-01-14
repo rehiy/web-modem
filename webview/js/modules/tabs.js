@@ -1,7 +1,3 @@
-/* =========================================
-   标签切换管理模块 (Tab Management Module)
-   ========================================= */
-
 import { $, $$ } from '../utils/dom.js';
 
 /**
@@ -9,7 +5,6 @@ import { $, $$ } from '../utils/dom.js';
  * 负责管理应用中的标签切换和数据加载
  */
 export class TabManager {
-
     /**
      * 构造函数
      * @param {Object} modemManager - Modem管理器实例

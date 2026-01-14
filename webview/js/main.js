@@ -1,7 +1,3 @@
-/* =========================================
-   主入口文件 (Main Entry File)
-   ========================================= */
-
 /**
  * Modem 调测系统主入口
  * 负责初始化所有模块并管理应用生命周期
@@ -20,10 +16,10 @@ import { UIrender } from './utils/render.js';
 window.app = {};
 
 /**
- * 应用初始化函数
+ * 应用初始化
  * 初始化所有管理器模块并设置全局应用对象
  */
-async function init() {
+document.addEventListener('DOMContentLoaded', async () => {
     try {
         // 初始化全局日志面板
         app.logger = new Logger();
@@ -48,7 +44,4 @@ async function init() {
     } catch (error) {
         console.error('应用初始化失败:', error);
     }
-}
-
-// 页面加载完成后执行初始化
-document.addEventListener('DOMContentLoaded', init);
+});

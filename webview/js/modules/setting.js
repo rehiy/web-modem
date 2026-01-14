@@ -1,10 +1,10 @@
+import { $ } from '../utils/dom.js';
+import { apiRequest } from '../utils/api.js';
+
 /**
  * 设置管理模块
  * 提供系统设置的加载和更新功能
  */
-import { apiRequest } from '../utils/api.js';
-import { $ } from '../utils/dom.js';
-
 export class SettingManager {
     constructor() {
         this.settings = {};

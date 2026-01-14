@@ -1,7 +1,3 @@
-/* =========================================
-   Webhook 管理模块 (Webhook Management Module)
-   ========================================= */
-
 import { $ } from '../utils/dom.js';
 import { apiRequest, buildQueryString } from '../utils/api.js';
 

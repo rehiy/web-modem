@@ -1,7 +1,3 @@
-/* =========================================
-   全局日志面板组件 (Global Log Panel Component)
-   ========================================= */
-
 import { $, escapeHtml } from '../utils/dom.js';
 
 /**
@@ -9,7 +5,6 @@ import { $, escapeHtml } from '../utils/dom.js';
  * 提供可收缩的悬浮窗日志显示功能
  */
 export class Logger {
-
     /**
      * 构造函数
      */

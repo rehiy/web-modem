@@ -1,7 +1,3 @@
-/* =========================================
-   短信存储管理模块 (Database SMS Management Module)
-   ========================================= */
-
 import { $, $$ } from '../utils/dom.js';
 import { apiRequest, buildQueryString } from '../utils/api.js';
 
@@ -10,7 +6,6 @@ import { apiRequest, buildQueryString } from '../utils/api.js';
  * 负责管理数据库中的短信数据，包括增删改查、分页、筛选等功能
  */
 export class SmsdbManager {
-
     /**
      * 构造函数
      * 初始化短信存储管理器的基本状态和属性
