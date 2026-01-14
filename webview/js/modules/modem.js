@@ -153,7 +153,7 @@ export class ModemManager {
         app.logger.info('正在读取短信列表 ...');
         const queryString = buildQueryString({ name: this.name });
         const smsList = await apiRequest(`/modem/sms/list?${queryString}`);
-        app.logger.info(`已读取 ${smsList.length} 条短信`);
+        app.logger.success(`已读取 ${smsList.length} 条短信`);
         // 渲染模板
         const container = $('#smsList');
         if (!smsList || smsList.length === 0) {
@@ -178,7 +178,7 @@ export class ModemManager {
         try {
             app.logger.info('正在发送短信 ...');
             await apiRequest('/modem/sms/send', 'POST', { name: this.name, number, message });
-            app.logger.success('短信发送成功！');
+            app.logger.success('短信发送成功', number);
             $('#smsNumber').value = '';
             $('#smsMessage').value = '';
             this.updateSMSCounter();

@@ -53,12 +53,10 @@ export class Logger {
             typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
         )).join(' ');
 
-        const timestamp = new Date().toLocaleTimeString();
-        const prefix = type === 'error' ? '错误: ' : type === 'success' ? '成功: ' : '';
-
+        const datetime = new Date().toLocaleTimeString();
         const logEntry = document.createElement('div');
+        logEntry.innerHTML = `[${datetime}] ${text}`;
         logEntry.className = `log-entry ${type}`;
-        logEntry.innerHTML = `[${timestamp}] ${prefix}${escapeHtml(text)}`;
 
         this.container.appendChild(logEntry);
         this.container.scrollTop = this.container.scrollHeight;

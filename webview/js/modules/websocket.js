@@ -52,7 +52,7 @@ export class WebSocketService {
      */
     setupEventListeners() {
         this.ws.onopen = async () => {
-            app.logger.info('WebSocket 已连接');
+            app.logger.success('WebSocket 已连接');
             this.emit('connected');
         };
 
@@ -67,7 +67,7 @@ export class WebSocketService {
         };
 
         this.ws.onclose = async (event) => {
-            app.logger.info('WebSocket 已断开', event.reason);
+            app.logger.error('WebSocket 已断开', event.reason);
             this.emit('disconnected', event.reason);
             this.scheduleReconnect(this.ws.url);
         };
