@@ -44,31 +44,12 @@ export class ModemManager {
                 if (connected) select.value = connected.name;
             }
 
-            this.loadModemRelatedInfo();
+            this.name = $('#modemSelect').value;
+            await this.getModemInfo();
+            await this.getSignalStrength();
             app.logger.info('已刷新串口列表');
         } catch (error) {
             app.logger.error('刷新串口失败: ' + error);
-        }
-    }
-
-    /**
-     * 加载Modem相关信息
-     * 获取当前选中Modem的信号强度、设备信息和短信列表
-     * @returns {Promise<null>}
-     */
-    async loadModemRelatedInfo() {
-        this.name = $('#modemSelect').value;
-        if (!this.name) {
-            app.logger.error('请选择可用串口');
-            return null;
-        }
-
-        try {
-            await this.getSignalStrength();
-            await this.getModemInfo();
-            await this.listSMS();
-        } catch (error) {
-            app.logger.error('串口相关信息加载失败');
         }
     }
 

@@ -23,7 +23,7 @@
                     <button class="nav-tab" data-tab="webhook" onclick="app.tabManager.switchTab('webhook')">Webhook</button>
                 </nav>
                 <div class="control-group">
-                    <select class="form-select" id="modemSelect" onchange="app.modemManager.loadModemRelatedInfo()">
+                    <select class="form-select" id="modemSelect" onchange="app.tabManager.switchModem()">
                         <option value="">-- 选择串口 --</option>
                     </select>
                     <button class="btn btn-primary" onclick="app.modemManager.refreshModems()">刷新设备</button>

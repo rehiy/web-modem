@@ -37,35 +37,44 @@ export class TabManager {
     }
 
     /**
+     * 选择Modem
+     * @returns {Promise<null>}
+     */
+    async switchModem() {
+        app.modemManager.name = $('#modemSelect').value;
+        if (!app.modemManager.name) {
+            app.logger.error('请选择可用串口');
+            return null;
+        }
+
+        try {
+            this.loadTabData()
+        } catch (error) {
+            app.logger.error('串口相关信息加载失败');
+        }
+    }
+
+    /**
      * 加载标签数据
      * 根据当前标签加载相应的数据和设置
      */
     loadTabData() {
         switch (this.currentTab) {
             case 'sms':
-                if (app.modemManager) {
-                    app.modemManager.listSMS();
-                }
+                app.modemManager.listSMS();
                 break;
             case 'smsdb':
-                if (app.settingManager) {
-                    app.settingManager.loadSettings();
-                }
-                if (app.smsdbManager) {
-                    app.smsdbManager.listSmsdb();
-                }
+                app.settingManager.loadSettings();
+                app.smsdbManager.listSmsdb();
                 break;
             case 'webhook':
-                if (app.settingManager) {
-                    app.settingManager.loadSettings();
-                }
-                if (app.webhookManager) {
-                    app.webhookManager.listWebhooks();
-                }
+                app.settingManager.loadSettings();
+                app.webhookManager.listWebhooks();
                 break;
             case 'main':
             default:
-                // 主页面不加载数据
+                app.modemManager.getModemInfo();
+                app.modemManager.getSignalStrength();
                 break;
         }
     }
