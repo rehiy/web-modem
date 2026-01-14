@@ -97,6 +97,14 @@ func (h *ModemHandler) GetModemBasicInfo(w http.ResponseWriter, r *http.Request)
 		info["operator"] = operator
 		info["act"] = act
 	}
+	// 获取短信模式
+	if mode, err := conn.GetSmsMode(); err == nil {
+		info["sms_mode"] = mode
+	}
+	// 获取短信中心
+	if center, _, err := conn.GetSmsCenter(); err == nil {
+		info["sms_center"] = center
+	}
 
 	respondJSON(w, http.StatusOK, info)
 }

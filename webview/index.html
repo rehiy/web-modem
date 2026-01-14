@@ -42,7 +42,6 @@
                     <div class="card-header">
                         <h2 class="card-title">Modem 信息</h2>
                         <div>
-                            <button class="btn btn-secondary" onclick="app.modemManager.getModemInfo()">获取信息</button>
                             <button class="btn btn-secondary" onclick="app.modemManager.getSignalStrength()">刷新信号</button>
                         </div>
                     </div>
@@ -72,15 +71,19 @@
                                 <span class="info-label">运营商</span>
                                 <span class="info-value">{info.operator}</span>
                             </div>
+                            <div class="info-item">
+                                <span class="info-label">短信模式</span>
+                                <span class="info-value">{info.sms_mode}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">短信中心</span>
+                                <span class="info-value">{info.sms_center}</span>
+                            </div>
                         </div>
                         <div class="info-grid mt-1" id="signalInfo">
                             <div class="info-item">
                                 <span class="info-label">信号强度</span>
                                 <span class="info-value">{signal.rssi}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">误码率</span>
-                                <span class="info-value">{signal.ber}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">信号等级</span>
