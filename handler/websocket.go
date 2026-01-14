@@ -43,12 +43,12 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 				return
 			}
 			if err := conn.WriteMessage(websocket.TextMessage, []byte(event)); err != nil {
-				log.Printf("WebSocket client disconnected: %v", r.RemoteAddr)
+				log.Printf("WebSocket client disconnected: %v(%s)", r.RemoteAddr, err)
 				return
 			}
 		case <-time.After(30 * time.Second):
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Printf("WebSocket client disconnected: %v", r.RemoteAddr)
+				log.Printf("WebSocket client disconnected: %v(%s)", r.RemoteAddr, err)
 				return
 			}
 		}

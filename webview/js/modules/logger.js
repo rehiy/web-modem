@@ -19,12 +19,10 @@ export class Logger {
      * 初始化拖动调整大小功能
      */
     initResize() {
-        const resizeHandle = document.querySelector('.logger-resize-handle');
+        const resizeHandle = $('.logger-resize-handle');
         if (!resizeHandle) {
-            console.log('Logger: 拖动手柄未找到');
             return;
         }
-        console.log('Logger: 拖动手柄初始化成功');
 
         let startX, startY;
         let startWidth, startHeight;
@@ -37,19 +35,15 @@ export class Logger {
             startWidth = this.panel.offsetWidth;
             startHeight = this.panel.offsetHeight;
             this.panel.classList.add('resizing');
-            console.log('Logger: 开始拖动', { startWidth, startHeight });
             e.preventDefault();
         });
 
         document.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
-
             const deltaX = startX - e.clientX;
             const deltaY = startY - e.clientY;
-
             const newWidth = Math.max(300, Math.min(800, startWidth + deltaX));
             const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, startHeight + deltaY));
-
             this.panel.style.width = newWidth + 'px';
             this.panel.style.height = newHeight + 'px';
         });
@@ -58,10 +52,6 @@ export class Logger {
             if (isResizing) {
                 isResizing = false;
                 this.panel.classList.remove('resizing');
-                console.log('Logger: 拖动结束', {
-                    width: this.panel.offsetWidth,
-                    height: this.panel.offsetHeight
-                });
             }
         });
     }
