@@ -1,4 +1,4 @@
-import { $, $$ } from '../utils/dom.js';
+import { $, $$, copyText } from '../utils/dom.js';
 import { apiRequest, buildQueryString } from '../utils/api.js';
 
 /**
@@ -82,7 +82,7 @@ export class SmsdbManager {
         if (!tbody) return;
 
         if (!smsList || smsList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-table-cell">暂无短信</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-table-cell">暂无短信</td></tr>';
             return;
         }
 
@@ -127,6 +127,34 @@ export class SmsdbManager {
             this.listSmsdb();
         } catch (error) {
             app.logger.error('删除短信失败: ' + error);
+        }
+    }
+
+    async copySmsdb(content) {
+        try {
+            // 方法1: 使用 Clipboard API (现代浏览器)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(content);
+                app.logger.success('短信内容已复制到剪贴板');
+                return;
+            }
+            // 方法2: 使用传统的 document.execCommand (兼容性更好)
+            const textArea = document.createElement('textarea');
+            textArea.value = content;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            textArea.style.top = '0';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            if (document.execCommand('copy')) {
+                app.logger.success('短信内容已复制到剪贴板');
+            } else {
+                app.logger.error('复制失败，请手动复制');
+            }
+            document.body.removeChild(textArea);
+        } catch (error) {
+            app.logger.error('复制失败: ' + error.message);
         }
     }
 
