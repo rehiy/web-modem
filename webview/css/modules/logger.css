@@ -66,7 +66,7 @@
 }
 
 .log-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--log-btn-hover-bg);
 }
 
 /* 日志面板内容区域 */
@@ -91,7 +91,7 @@
 .log-entry {
     margin-bottom: 0.5rem;
     padding: 0.25rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--log-entry-border);
 }
 
 .log-entry:last-child {

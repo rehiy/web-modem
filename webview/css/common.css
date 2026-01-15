@@ -9,22 +9,30 @@
 
 :root {
     /* 颜色定义 */
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --secondary: #64748b;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --light: #f8fafc;
-    --dark: #1e293b;
-    --border: #e2e8f0;
+    --primary: #4a90e2;
+    --primary-dark: #3a7bd5;
+    --secondary: #8a9ba8;
+    --success: #2ecc71;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+    --light: #ffffff;
+    --dark: #2c3e50;
+    --border: #e0e0e0;
+
+    /* 背景色 */
+    --body-bg: #ededed;
+    --card-header-bg: #fafbfa;
+    --nav-tab-hover-bg: rgba(255, 255, 255, 0.5);
+    --log-btn-hover-bg: rgba(255, 255, 255, 0.2);
+    --log-entry-border: rgba(0, 0, 0, 0.05);
+
+    /* 阴影效果 */
+    --shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 12px 20px -4px rgba(0, 0, 0, 0.12);
+    --focus-ring: rgba(74, 144, 226, 0.1);
 
     /* 间距和尺寸 */
     --radius: 0.5rem;
-
-    /* 阴影效果 */
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 /**
@@ -41,7 +49,7 @@
 /* 页面基础样式 */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: var(--secondary);
+    background: var(--body-bg);
     min-height: 100vh;
     line-height: 1.6;
     padding: 0.75rem;
@@ -170,7 +178,7 @@ body {
 
 /* 悬停状态 */
 .nav-tab:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--nav-tab-hover-bg);
 }
 
 /**
@@ -192,6 +200,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    background-color: var(--card-header-bg);
 }
 
 .card-title {
@@ -303,7 +312,7 @@ body {
 .form-textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .form-textarea {

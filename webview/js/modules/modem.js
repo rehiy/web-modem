@@ -192,7 +192,7 @@ export class ModemManager {
         // 渲染模板
         const container = $('#smsList');
         if (!smsList || smsList.length === 0) {
-            container.innerHTML = '暂无短信';
+            container.innerHTML = '内置存储暂无短信';
         } else {
             container.innerHTML = smsList.map(sms => app.render.render('smsItem', { sms })).join('');
         }
