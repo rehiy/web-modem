@@ -225,6 +225,7 @@ body {
     height: 40px;
     line-height: normal;
     box-sizing: border-box;
+    white-space: nowrap;
 }
 
 /* 禁用状态 */

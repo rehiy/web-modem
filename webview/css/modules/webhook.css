@@ -3,44 +3,21 @@
    ========================================= */
 
 /* Webhook 表格特定样式 */
-.webhook-table th:nth-child(1),
-.webhook-table td:nth-child(1) {
-    width: 40px;
+.webhook-table th,
+.webhook-table td {
     text-align: center;
+    white-space: nowrap;
 }
 
 .webhook-table th:nth-child(2),
 .webhook-table td:nth-child(2) {
-    width: 150px;
-}
-
-.webhook-table th:nth-child(3),
-.webhook-table td:nth-child(3) {
     min-width: 200px;
     max-width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.webhook-table th:nth-child(4),
-.webhook-table td:nth-child(4) {
-    width: 80px;
-    text-align: center;
-}
-
-.webhook-table th:nth-child(5),
-.webhook-table td:nth-child(5) {
-    width: 150px;
-}
-
-.webhook-table th:nth-child(6),
-.webhook-table td:nth-child(6) {
-    width: 240px;
-    text-align: center;
-    white-space: nowrap;
-}
-
 /* 优化表格中的按钮样式 */
-.webhook-table td:nth-child(6) .btn {
+.webhook-table td:nth-child(5) .btn {
     margin-right: 0.25rem;
 }

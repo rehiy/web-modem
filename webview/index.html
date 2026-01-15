@@ -201,7 +201,6 @@
                                 <thead>
                                     <tr>
                                         <th><input type="checkbox" id="smsdbCheckAll" onchange="app.smsdbManager.toggleCheckAll()"></th>
-                                        <th>ID</th>
                                         <th>方向</th>
                                         <th>发送号码</th>
                                         <th>接收号码</th>
@@ -214,13 +213,13 @@
                                     <!-- 短信存储列表项模板 -->
                                     <tr id="smsdbItem">
                                         <td><input type="checkbox" value="{id}" onchange="app.smsdbManager.toggleSmsdbSelection({id})"></td>
-                                        <td>{id}</td>
                                         <td>{direction}</td>
                                         <td>{send_number}</td>
                                         <td>{receive_number}</td>
                                         <td>{content}</td>
                                         <td>{receive_time}</td>
                                         <td>
+                                            <button class="btn btn-small btn-secondary" onclick="app.smsdbManager.copySmsdb(`{content}`)">复制</button>
                                             <button class="btn btn-small btn-danger" onclick="app.smsdbManager.deleteSmsdb({id})">删除</button>
                                         </td>
                                     </tr>
@@ -266,7 +265,6 @@
                             <table class="table webhook-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
                                         <th>名称</th>
                                         <th>URL</th>
                                         <th>状态</th>
@@ -277,7 +275,6 @@
                                 <tbody id="webhookList">
                                     <!-- Webhook列表项模板 -->
                                     <tr id="webhookItem">
-                                        <td>{id}</td>
                                         <td>{name}</td>
                                         <td>{url}</td>
                                         <td>{enabled}</td>
