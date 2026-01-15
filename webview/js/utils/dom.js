@@ -65,7 +65,7 @@ export class UIrender {
         return template.replace(/\{([\w.]+)\}/g, (_, path) => {
             const value = path.split('.').reduce((obj, k) => (obj && obj[k] !== undefined ? obj[k] : undefined), data);
             const safe = value === undefined || value === null || value === '' ? '-' : value;
-            return typeof safe === 'object' ? JSON.stringify(safe) : this.escapeHtml(String(safe));
+            return typeof safe === 'object' ? JSON.stringify(safe) : escapeHtml(String(safe));
         });
     }
 }
