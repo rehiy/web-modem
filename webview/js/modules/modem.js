@@ -110,6 +110,19 @@ export class ModemManager {
     }
 
     /**
+     * 选择快捷AT命令
+     * 当下拉菜单选择改变时，将选中的命令填充到输入框
+     * @param {string} value - 选中的AT命令
+     */
+    onATCommandSelect(value) {
+        const atCommandInput = $('#atCommand');
+        if (atCommandInput) {
+            atCommandInput.value = value;
+            atCommandInput.focus();
+        }
+    }
+
+    /**
      * 向终端添加内容
      * 向指定的终端元素追加文本内容，并自动滚动到底部
      * @param {string} elementId - 终端元素的ID

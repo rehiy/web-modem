@@ -101,6 +101,68 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">AT 命令终端</h2>
+                        <span class="flex-auto"></span>
+                        <select class="form-select" onchange="app.modemManager.onATCommandSelect(this.value)">
+                            <option value="">-- 选择快捷指令 --</option>
+                            <optgroup label="基本控制">
+                                <option value="AT">AT - 测试连接</option>
+                                <option value="ATE0">ATE0 - 关闭回显</option>
+                                <option value="ATE1">ATE1 - 开启回显</option>
+                                <option value="ATZ">ATZ - 重置 modem</option>
+                                <option value="AT&F">AT&F - 恢复出厂设置</option>
+                                <option value="AT&W">AT&W - 保存设置</option>
+                            </optgroup>
+                            <optgroup label="设备身份信息">
+                                <option value="AT+CGSN">AT+CGSN - 查询 IMEI</option>
+                                <option value="AT+CGMI">AT+CGMI - 查询制造商</option>
+                                <option value="AT+CGMM">AT+CGMM - 查询型号</option>
+                                <option value="AT+CGMR">AT+CGMR - 查询版本</option>
+                                <option value="AT+CIMI">AT+CIMI - 查询 IMSI</option>
+                                <option value="AT+CCID">AT+CCID - 查询 ICCID</option>
+                                <option value="AT+CNUM">AT+CNUM - 查询本机号码</option>
+                            </optgroup>
+                            <optgroup label="网络状态">
+                                <option value="AT+COPS">AT+COPS - 查询/设置运营商</option>
+                                <option value="AT+CNMP">AT+CNMP - 查询/设置网络模式</option>
+                                <option value="AT+CREG">AT+CREG - 查询网络注册状态</option>
+                                <option value="AT+CGREG">AT+CGREG - 查询 GPRS 注册状态</option>
+                                <option value="AT+CSQ">AT+CSQ - 查询信号质量</option>
+                            </optgroup>
+                            <optgroup label="SIM 卡管理">
+                                <option value="AT+CPIN">AT+CPIN - 查询 SIM 卡状态</option>
+                                <option value="AT+CPWD">AT+CPWD - 修改 PIN 码</option>
+                                <option value="AT+CLCK">AT+CLCK - 查询/设置 PIN 锁</option>
+                            </optgroup>
+                            <optgroup label="设备状态">
+                                <option value="AT+CBC">AT+CBC - 查询电池电量</option>
+                                <option value="AT+CPMUTEMP">AT+CPMUTEMP - 查询设备温度</option>
+                                <option value="AT+CCLK">AT+CCLK - 查询/设置网络时间</option>
+                            </optgroup>
+                            <optgroup label="网络配置">
+                                <option value="AT+CGDCONT">AT+CGDCONT - 查询/设置 APN</option>
+                                <option value="AT+CGPADDR">AT+CGPADDR - 查询 IP 地址</option>
+                                <option value="AT+CGACT">AT+CGACT - 查询/设置 PDP 上下文</option>
+                            </optgroup>
+                            <optgroup label="短信相关">
+                                <option value="AT+CMGF">AT+CMGF - 查询/设置短信格式</option>
+                                <option value="AT+CPMS">AT+CPMS - 查询/设置短信存储位置</option>
+                                <option value="AT+CSCA">AT+CSCA - 查询/设置短信中心号码</option>
+                                <option value="AT+CMGL">AT+CMGL - 列出短信</option>
+                                <option value="AT+CMGR">AT+CMGR - 读取短信</option>
+                                <option value="AT+CMGD">AT+CMGD - 删除短信</option>
+                                <option value="AT+CMGS">AT+CMGS - 发送短信</option>
+                            </optgroup>
+                            <optgroup label="语音通话">
+                                <option value="ATD">ATD - 拨号</option>
+                                <option value="ATA">ATA - 接听</option>
+                                <option value="ATH">ATH - 挂断</option>
+                                <option value="AT+CLIP">AT+CLIP - 查询/设置来电显示</option>
+                                <option value="AT+CLCC">AT+CLCC - 查询通话状态</option>
+                                <option value="AT+CCWA">AT+CCWA - 查询/设置呼叫等待</option>
+                                <option value="AT+CCFC">AT+CCFC - 查询/设置呼叫转移</option>
+                            </optgroup>
+                        </select>
+                        <span>&nbsp; &nbsp;</span>
                         <button class="btn btn-primary" onclick="app.modemManager.sendATCommand()">发送指令</button>
                     </div>
                     <div class="card-body">
