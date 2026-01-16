@@ -2,6 +2,8 @@
 #
 
 modprobe option
+
+# please replace the serial number with your own
 echo 2ecc 3012 > /sys/bus/usb-serial/drivers/option1/new_id
 
 # disable the network interface to avoid conflicts
