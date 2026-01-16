@@ -28,8 +28,11 @@
 访问 [Releases](https://github.com/rehiy/web-modem/releases) 下载对应系统的二进制文件：
 
 ```bash
-# 下载后直接运行
-./web-modem
+# 配置认证
+export BASIC_AUTH_USER=admin
+export BASIC_AUTH_PASSWORD=password
+# 启动服务
+chmod +x web-modem && ./web-modem
 ```
 
 ### 源码编译
@@ -53,9 +56,9 @@ go build -o web-modem .
 
 | 变量名 | 说明 | 默认值 |
 |--------|------|--------|
+| `DB_PATH` | 数据库文件路径 | `data/modem.db` |
+| `HTTP_PORT` | HTTP 监听端口 | `8080` |
 | `MODEM_PORT` | 串口设备，多个用逗号分隔 | 自动扫描 |
-| `DB_PATH` | 数据库文件路径 | `./data/modem.db` |
-| `HTTP_ADDR` | HTTP 监听地址 | `:8080` |
 | `BASIC_AUTH_USER` | Basic Auth 用户名 | 无（不启用） |
 | `BASIC_AUTH_PASSWORD` | Basic Auth 密码 | 无（不启用） |
 
@@ -73,13 +76,13 @@ go build -o web-modem .
 - 切换到 "短信" 标签页
 - 选择设备，输入号码和内容发送短信
 - 自动接收 incoming 短信，支持 Unicode 中文
-- 启用 "数据库存储" 功能保存短信
+- 收到短信后自动删除设备上的短信（数据库中保留）
 
 ### 3. Webhook 配置
 
 - 切换到 "Webhook" 标签页
 - 添加 Webhook，填写名称、URL 和模板
-- 勾选 "启用 Webhook 功能" 自动触发
+- 默认禁用，需在设置中启用后才会触发
 - 点击 "测试" 验证配置
 
 ## 🔌 API 文档
@@ -109,9 +112,10 @@ POST /api/smsdb/sync           # 同步短信
 ```http
 POST   /api/webhook           # 创建 Webhook
 GET    /api/webhook/list       # 获取列表
-PUT    /api/webhook/update     # 更新
-DELETE /api/webhook/delete     # 删除
-POST   /api/webhook/test       # 测试
+GET    /api/webhook/get?id=1   # 获取单个 Webhook
+PUT    /api/webhook/update?id=1 # 更新
+DELETE /api/webhook/delete?id=1 # 删除
+POST   /api/webhook/test?id=1  # 测试
 ```
 
 ### 设置 API
@@ -120,6 +124,12 @@ POST   /api/webhook/test       # 测试
 GET /api/settings              # 获取所有设置
 PUT /api/settings/smsdb        # 更新短信存储设置
 PUT /api/settings/webhook      # 更新 Webhook 设置
+```
+
+### WebSocket API
+
+```http
+WS /ws/modem                   # Modem 事件实时推送
 ```
 
 ## ⚠️ 注意事项

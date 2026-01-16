@@ -16,7 +16,7 @@ const (
 )
 
 func main() {
-	port := os.Getenv("PORT")
+	port := os.Getenv("HTTP_PORT")
 	if port == "" {
 		port = listenPort
 	}
