@@ -1,11 +1,13 @@
 # Web Modem 调测工具
 
-[![Go Version](https://img.shields.io/badge/Go-1.23+-blue.svg)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.24+-blue.svg)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 
 **Web-Modem** 是一款专为物联网开发人员设计的 Modem 模块调试与测试工具，提供直观的 Web 界面，帮助开发者快速连接、配置和调测各类 Modem 设备。
 
-**⚠️ 特别声明：本工具仅限用于物联网设备开发调测，禁止用于任何非法场景**
+## ⚠️ 特别声明
+
+本工具仅限用于物联网设备开发调测，禁止用于任何非法场景。
 
 ## ✨ 功能特性
 
@@ -55,10 +57,10 @@ go build -o web-modem .
 ### 配置选项
 
 | 变量名 | 说明 | 默认值 |
-|--------|------|--------|
+| :--- | :--- | :--- |
 | `DB_PATH` | 数据库文件路径 | `data/modem.db` |
 | `HTTP_PORT` | HTTP 监听端口 | `8080` |
-| `MODEM_PORT` | 串口设备，多个用逗号分隔 | 自动扫描 |
+| `MODEM_PORT` | 串口设备，多个用逗号分隔 | Linux: /dev/ttyUSB*,/dev/ttyACM*; Windows: COM1-COM5 |
 | `BASIC_AUTH_USER` | Basic Auth 用户名 | 无（不启用） |
 | `BASIC_AUTH_PASSWORD` | Basic Auth 密码 | 无（不启用） |
 
@@ -102,7 +104,7 @@ POST /api/modem/sms/delete    # 删除短信
 ### 数据库 API
 
 ```http
-GET  /api/smsdb/list?direction=in&limit=50 # 查询短信
+GET  /api/smsdb/list?direction=in&limit=50&offset=0 # 查询短信（支持分页）
 POST /api/smsdb/delete         # 批量删除
 POST /api/smsdb/sync           # 同步短信
 ```
