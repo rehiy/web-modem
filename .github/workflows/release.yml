@@ -11,7 +11,6 @@ jobs:
     permissions:
       contents: write
     env:
-      UPDATE_SOURCE: github
       UPDATE_REPO: ${{ github.repository }}
 
     steps:
@@ -23,14 +22,28 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v6
         with:
-          go-version: 1.25
+          go-version-file: go.mod
+
+      - name: Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Prepare pnpm
+        run: corepack enable
 
       - name: Build binary
         run: |
           sh build.sh
 
+      - name: Verify
+        run: |
+          (cd webui && corepack pnpm lint)
+          go test ./...
+          go vet ./...
+
       - name: Create github release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body_path: ./RELEASE.md

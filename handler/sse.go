@@ -16,9 +16,9 @@ type SseHandler struct {
 }
 
 type sseBroker struct {
-	source  <-chan string
+	source  <-chan service.ModemEventMsg
 	mu      sync.RWMutex
-	clients map[chan string]struct{}
+	clients map[chan service.ModemEventMsg]struct{}
 }
 
 var modemEventBroker = newSseBroker(service.ModemEvent)
@@ -33,10 +33,10 @@ func NewSseHandler() *SseHandler {
 	}
 }
 
-func newSseBroker(source <-chan string) *sseBroker {
+func newSseBroker(source <-chan service.ModemEventMsg) *sseBroker {
 	return &sseBroker{
 		source:  source,
-		clients: make(map[chan string]struct{}),
+		clients: make(map[chan service.ModemEventMsg]struct{}),
 	}
 }
 
@@ -53,8 +53,8 @@ func (b *sseBroker) run() {
 	}
 }
 
-func (b *sseBroker) subscribe() (chan string, func()) {
-	client := make(chan string, 16)
+func (b *sseBroker) subscribe() (chan service.ModemEventMsg, func()) {
+	client := make(chan service.ModemEventMsg, 16)
 
 	b.mu.Lock()
 	b.clients[client] = struct{}{}
@@ -72,7 +72,7 @@ func (b *sseBroker) subscribe() (chan string, func()) {
 	return client, unsubscribe
 }
 
-func (b *sseBroker) broadcast(event string) {
+func (b *sseBroker) broadcast(event service.ModemEventMsg) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -80,7 +80,7 @@ func (b *sseBroker) broadcast(event string) {
 		select {
 		case client <- event:
 		default:
-			log.Printf("SSE client event queue full, dropping modem event: %s", event)
+			log.Printf("SSE client event queue full, dropping modem event: %s %s", event.Event, event.Data)
 		}
 	}
 }
@@ -116,7 +116,7 @@ func (h *SseHandler) HandleModemEvents(w http.ResponseWriter, r *http.Request) {
 			if !ok {
 				return
 			}
-			writeSseEvent(w, "message", event)
+			writeSseEvent(w, event.Event, event.Data)
 			flusher.Flush()
 		case <-heartbeat.C:
 			fmt.Fprint(w, ": keepalive\n\n")

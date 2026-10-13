@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/rehiy/modem/at"
 	"github.com/rehiy/web-modem/database"
 	"github.com/rehiy/web-modem/models"
 )
@@ -59,8 +60,8 @@ func (s *SmsdbService) SyncSmsToDB(modemName string) (*SmsdbSyncResult, error) {
 		modelSms := atSmsToModelSms(atSms, conn)
 
 		// 检查是否已存在
-		if res, err := database.GetSmsListByDeviceIDs(atSms.Indices, conn.IMEI, conn.Number, modemName); err == nil && len(res) > 0 {
-			log.Printf("[%s] Sms already exists in database, skipping: %s", modemName, res[0].SmsIDs)
+		if exists, err := FindExistingDeviceSms(atSms, modelSms); err == nil && exists {
+			log.Printf("[%s] Sms already exists in database, skipping: %s", modemName, modelSms.SmsIDs)
 			continue
 		}
 
@@ -109,6 +110,25 @@ func (s *SmsdbService) SyncAllSmsToDB() (*SmsdbSyncAllResult, error) {
 	}
 
 	return result, nil
+}
+
+// FindExistingDeviceSms 判断设备上的短信是否已入库。
+// 设备删除短信后存储索引会被复用，仅按索引匹配会把复用索引的新短信误判为
+// 已存在，因此必须同时核对发送号码、内容与接收时间。
+func FindExistingDeviceSms(atSms at.Sms, modelSms *models.Sms) (bool, error) {
+	candidates, err := database.GetSmsListByDeviceIDs(atSms.Indices, modelSms.DeviceIMEI, modelSms.ReceiveNumber, modelSms.ModemName)
+	if err != nil {
+		return false, err
+	}
+
+	for _, existing := range candidates {
+		if existing.SendNumber == modelSms.SendNumber &&
+			existing.Content == modelSms.Content &&
+			existing.ReceiveTime.Equal(modelSms.ReceiveTime) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // HandleIncomingSms 处理接收到的短信：保存到数据库

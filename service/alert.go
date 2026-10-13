@@ -34,7 +34,7 @@ func (s *AlertService) ScanModemAlerts() error {
 		}
 
 		source := conn.Name
-		if conn.Device == nil || !conn.Connected || !conn.Device.IsOpen() {
+		if conn.Device == nil || !conn.State().Connected || !conn.IsOpen() {
 			if err := RaiseAlert("modem_offline", "critical", source, "卡离线", fmt.Sprintf("%s 未连接或串口不可用", source)); err != nil {
 				log.Printf("[Alert] Failed to raise modem_offline alert: %v", err)
 			}
@@ -46,6 +46,7 @@ func (s *AlertService) ScanModemAlerts() error {
 		s.scanSIMStatus(conn)
 		s.scanNetworkStatus(conn)
 		s.scanSignalStatus(conn)
+		s.scanSmsCenterStatus(conn)
 	}
 
 	if connectedCount == 0 {
@@ -84,10 +85,16 @@ func (s *AlertService) scanNetworkStatus(conn *ModemConn) {
 	ResolveAlert("network_status_unknown", source)
 	if stat != 1 && stat != 5 {
 		RaiseAlert("network_not_registered", "critical", source, "网络未注册", registrationAlertDetail(stat))
+		ResolveAlert("roaming_active", source)
 		return
 	}
 
 	ResolveAlert("network_not_registered", source)
+	if stat == 5 {
+		RaiseAlert("roaming_active", "warning", source, "当前处于漫游", "网络注册状态为漫游")
+		return
+	}
+	ResolveAlert("roaming_active", source)
 }
 
 func (s *AlertService) scanSignalStatus(conn *ModemConn) {
@@ -112,6 +119,41 @@ func (s *AlertService) scanSignalStatus(conn *ModemConn) {
 	}
 
 	ResolveAlert("low_signal", source)
+}
+
+func (s *AlertService) scanSmsCenterStatus(conn *ModemConn) {
+	source := conn.Name
+	center, _, err := conn.GetSmsCenter()
+	if err != nil {
+		RaiseAlert("sms_center_missing", "warning", source, "短信中心未知", err.Error())
+		ResolveAlert("sms_center_invalid", source)
+		return
+	}
+
+	center = strings.TrimSpace(center)
+	if center == "" {
+		RaiseAlert("sms_center_missing", "warning", source, "短信中心缺失", "AT+CSCA? 返回空")
+		ResolveAlert("sms_center_invalid", source)
+		return
+	}
+
+	ResolveAlert("sms_center_missing", source)
+	digits := strings.TrimPrefix(center, "+")
+	if len(digits) < 5 || normalizeAlertDigits(digits) != digits {
+		RaiseAlert("sms_center_invalid", "warning", source, "短信中心格式异常", center)
+		return
+	}
+
+	ResolveAlert("sms_center_invalid", source)
+}
+
+func normalizeAlertDigits(value string) string {
+	return strings.Map(func(r rune) rune {
+		if r >= '0' && r <= '9' {
+			return r
+		}
+		return -1
+	}, value)
 }
 
 func registrationAlertDetail(stat int) string {
@@ -156,7 +198,13 @@ func ResolveAlert(alertType string, source string) {
 		return
 	}
 	if alert != nil {
-		NewWebhookService().HandleAlertEvent(WebhookEventAlertResolved, alert)
+		ws := NewWebhookService()
+		ws.HandleAlertEvent(WebhookEventAlertResolved, alert)
+		if alertType == "modem_offline" {
+			ws.HandleDataEvent(WebhookEventModemOnline, map[string]any{
+				"modem_name": source,
+			})
+		}
 	}
 }
 

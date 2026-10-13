@@ -80,6 +80,8 @@ func createTables() error {
 		&models.WebhookDelivery{},
 		&models.Alert{},
 		&models.Setting{},
+		&models.SimProfile{},
+		&models.EuiccRotation{},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to auto migrate: %w", err)

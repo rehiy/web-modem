@@ -1,12 +1,13 @@
 module github.com/rehiy/web-modem
 
-go 1.25.0
+go 1.26.3
 
 require (
+	github.com/damonto/euicc-go v1.1.2
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gorilla/mux v1.8.1
 	github.com/rehiy/libgo v0.16.1
-	github.com/rehiy/modem v0.0.5
+	github.com/rehiy/modem v0.0.6
 	go.bug.st/serial v1.7.1
 	gorm.io/gorm v1.31.1
 )

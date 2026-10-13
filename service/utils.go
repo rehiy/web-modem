@@ -15,11 +15,11 @@ func atSmsToModelSms(atSms at.Sms, conn *ModemConn) *models.Sms {
 		Content:       atSms.Text,
 		SmsIDs:        database.IntArrayToString(atSms.Indices),
 		ReceiveTime:   parseSmsTime(atSms.Time),
-		ReceiveNumber: connValue(conn, func(c *ModemConn) string { return c.Number }),
+		ReceiveNumber: connValue(conn, func(c *ModemConn) string { return c.State().Number }),
 		SendNumber:    atSms.Number,
 		Direction:     "in",
 		ModemName:     connValue(conn, func(c *ModemConn) string { return c.Name }),
-		DeviceIMEI:    connValue(conn, func(c *ModemConn) string { return c.IMEI }),
+		DeviceIMEI:    connValue(conn, func(c *ModemConn) string { return c.State().IMEI }),
 	}
 	EnrichSmsCardInfo(sms, conn)
 	return sms
@@ -38,46 +38,47 @@ func EnrichSmsCardInfo(sms *models.Sms, conn *ModemConn) {
 		return
 	}
 
+	state := conn.State()
 	if sms.DeviceIMEI == "" {
-		sms.DeviceIMEI = strings.TrimSpace(conn.IMEI)
+		sms.DeviceIMEI = state.IMEI
 	}
 	if sms.ModemName == "" {
 		sms.ModemName = strings.TrimSpace(conn.Name)
 	}
 	if sms.ReceiveNumber == "" && sms.Direction == "in" {
-		sms.ReceiveNumber = strings.TrimSpace(conn.Number)
+		sms.ReceiveNumber = state.Number
 	}
 	if sms.SendNumber == "" && sms.Direction == "out" {
-		sms.SendNumber = strings.TrimSpace(conn.Number)
+		sms.SendNumber = state.Number
 	}
 
 	if sms.SimICCID == "" {
-		sms.SimICCID = strings.TrimSpace(conn.ICCID)
+		sms.SimICCID = state.ICCID
 	}
 	if sms.SimICCID == "" {
 		if iccid := readConnICCID(conn); iccid != "" {
-			conn.ICCID = iccid
-			sms.SimICCID = conn.ICCID
+			conn.SetICCID(iccid)
+			sms.SimICCID = iccid
 		}
 	}
 
 	if sms.SimIMSI == "" {
-		sms.SimIMSI = strings.TrimSpace(conn.IMSI)
+		sms.SimIMSI = state.IMSI
 	}
 	if sms.SimIMSI == "" {
 		if imsi, err := conn.GetIMSI(); err == nil {
-			conn.IMSI = strings.TrimSpace(imsi)
-			sms.SimIMSI = conn.IMSI
+			conn.SetIMSI(imsi)
+			sms.SimIMSI = strings.TrimSpace(imsi)
 		}
 	}
 
 	if sms.Operator == "" {
-		sms.Operator = strings.TrimSpace(conn.Operator)
+		sms.Operator = state.Operator
 	}
 	if sms.Operator == "" {
 		if _, _, operator, _, err := conn.GetOperator(); err == nil {
-			conn.Operator = strings.TrimSpace(operator)
-			sms.Operator = conn.Operator
+			conn.SetOperator(operator)
+			sms.Operator = strings.TrimSpace(operator)
 		}
 	}
 }

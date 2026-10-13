@@ -31,11 +31,26 @@ func NewModemHandler() *ModemHandler {
 	}
 }
 
-// ListModems 返回可用调制解调器的列表
+// ListModems 返回在线设备列表。
+//
+// 默认直接返回后台监视维护的连接池快照（不访问串口，毫秒级响应）；
+// 带 rescan=1 或服务刚启动尚未完成首次扫描时，现场扫描后再返回。
 func (h *ModemHandler) ListModems(w http.ResponseWriter, r *http.Request) {
-	h.ms.ScanModems()
-	modems := h.ms.GetConnList()
-	respondJSON(w, http.StatusOK, modems)
+	if isTruthyQuery(r, "rescan") || !h.ms.HasScanned() {
+		h.ms.RescanModems()
+	}
+	// 快照随设备状态变化，禁止浏览器/代理缓存
+	setNoCache(w)
+	respondJSON(w, http.StatusOK, h.ms.ListModemStates(true))
+}
+
+// isTruthyQuery 判断查询参数是否为真值（1/true/yes）。
+func isTruthyQuery(r *http.Request, key string) bool {
+	switch strings.ToLower(strings.TrimSpace(r.URL.Query().Get(key))) {
+	case "1", "true", "yes":
+		return true
+	}
+	return false
 }
 
 // SendModemCommand 向调制解调器发送原始 AT 命令
@@ -43,6 +58,7 @@ func (h *ModemHandler) SendModemCommand(w http.ResponseWriter, r *http.Request) 
 	var req struct {
 		Name    string `json:"name"`
 		Command string `json:"command"`
+		Timeout int    `json:"timeout"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
@@ -54,8 +70,11 @@ func (h *ModemHandler) SendModemCommand(w http.ResponseWriter, r *http.Request) 
 		respondJSON(w, http.StatusBadRequest, H{"error": err.Error()})
 		return
 	}
+	// 原始 AT 指令可能修改任意状态，执行后使信息缓存失效
+	defer h.ms.InvalidateModemCache(conn.Name)
 
-	responses, err := conn.SendCommand(req.Command)
+	timeout := time.Duration(req.Timeout) * time.Second
+	responses, err := conn.SendCommandWithTimeout(req.Command, timeout)
 	if err != nil {
 		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
 		return
@@ -68,7 +87,8 @@ func (h *ModemHandler) SendModemCommand(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// GetModemBasicInfo 获取调制解调器基本信息
+// GetModemBasicInfo 获取调制解调器基本信息。
+// 结果按设备缓存（见 service.LoadModemInfo），带 refresh=1 时强制现场查询。
 func (h *ModemHandler) GetModemBasicInfo(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
@@ -82,39 +102,48 @@ func (h *ModemHandler) GetModemBasicInfo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	info := H{"name": name}
-	if conn.IMEI != "" {
-		info["imei"] = conn.IMEI
+	info, _ := h.ms.LoadModemInfo(conn.Name, isTruthyQuery(r, "refresh"), func() (map[string]any, error) {
+		return queryModemInfo(conn), nil
+	})
+	setNoCache(w)
+	respondJSON(w, http.StatusOK, info)
+}
+
+// queryModemInfo 现场查询设备基本信息，并同步更新连接上缓存的 SIM 身份字段。
+func queryModemInfo(conn *service.ModemConn) H {
+	state := conn.State()
+	info := H{"name": conn.Name}
+	if state.IMEI != "" {
+		info["imei"] = state.IMEI
 	}
-	if conn.Number != "" {
-		info["number"] = conn.Number
+	if state.Number != "" {
+		info["number"] = state.Number
 	}
-	// 获取制造商
-	if manufacturer, err := conn.GetManufacturer(); err == nil {
-		info["manufacturer"] = manufacturer
+	// 厂商/型号/固件/IMEI 连接时已读取，缺失时才现场查询
+	if v := firstNonEmptyValue(state.Manufacturer, func() (string, error) { return conn.GetManufacturer() }); v != "" {
+		info["manufacturer"] = v
 	}
-	// 获取型号
-	if model, err := conn.GetModel(); err == nil {
-		info["model"] = model
+	if v := firstNonEmptyValue(state.Model, func() (string, error) { return conn.GetModel() }); v != "" {
+		info["model"] = v
 	}
-	// 获取固件版本
-	if revision, err := conn.GetRevision(); err == nil {
-		info["revision"] = revision
+	if v := firstNonEmptyValue(state.Revision, func() (string, error) { return conn.GetRevision() }); v != "" {
+		info["revision"] = v
 	}
-	// 获取IMEI/序列号
-	if imei, err := conn.GetIMEI(); err == nil {
-		info["imei"] = imei
-		conn.IMEI = imei
+	if state.IMEI == "" {
+		if imei, err := conn.GetIMEI(); err == nil {
+			info["imei"] = imei
+			conn.SetIMEI(imei)
+		}
 	}
 	// 获取 ICCID
 	if iccid, err := getICCID(conn); err == nil {
 		info["iccid"] = iccid
-		conn.ICCID = strings.TrimSpace(iccid)
+		conn.SetICCID(iccid)
 	}
 	// 获取IMSI
 	if imsi, err := conn.GetIMSI(); err == nil {
 		info["imsi"] = imsi
-		conn.IMSI = strings.TrimSpace(imsi)
+		conn.SetIMSI(imsi)
 	}
 	// 获取 SIM 状态
 	if simStatus, err := conn.GetSIMStatus(); err == nil {
@@ -124,12 +153,12 @@ func (h *ModemHandler) GetModemBasicInfo(w http.ResponseWriter, r *http.Request)
 	// 获取手机号
 	if number, _, err := conn.GetNumber(); err == nil {
 		info["number"] = number
-		conn.Number = number
+		conn.SetNumber(number)
 	}
 	// 获取运营商（当前注册网络/Visited PLMN）
 	if _, _, operator, act, err := conn.GetOperator(); err == nil {
 		info["operator"] = operator
-		conn.Operator = strings.TrimSpace(operator)
+		conn.SetOperator(operator)
 		info["act"] = act
 		info["act_label"] = actLabel(act)
 	}
@@ -161,11 +190,22 @@ func (h *ModemHandler) GetModemBasicInfo(w http.ResponseWriter, r *http.Request)
 			info["sms_mode"] = "pdu"
 		}
 	}
-
-	respondJSON(w, http.StatusOK, info)
+	return info
 }
 
-// GetModemSignal 获取当前信号强度
+// firstNonEmptyValue 优先返回已缓存的值，为空时调用 query 现场读取。
+func firstNonEmptyValue(cached string, query func() (string, error)) string {
+	if cached != "" {
+		return cached
+	}
+	if v, err := query(); err == nil {
+		return strings.TrimSpace(v)
+	}
+	return ""
+}
+
+// GetModemSignal 获取当前信号强度。
+// 结果按设备短时缓存，带 refresh=1 时强制现场查询。
 func (h *ModemHandler) GetModemSignal(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
@@ -179,10 +219,22 @@ func (h *ModemHandler) GetModemSignal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rssi, ber, err := conn.GetSignalQuality()
+	signal, err := h.ms.LoadModemSignal(conn.Name, isTruthyQuery(r, "refresh"), func() (map[string]any, error) {
+		return querySignal(conn)
+	})
 	if err != nil {
 		respondJSON(w, http.StatusInternalServerError, H{"error": err.Error()})
 		return
+	}
+	setNoCache(w)
+	respondJSON(w, http.StatusOK, signal)
+}
+
+// querySignal 现场查询信号质量及扩展的小区/射频信息。
+func querySignal(conn *service.ModemConn) (map[string]any, error) {
+	rssi, ber, err := conn.GetSignalQuality()
+	if err != nil {
+		return nil, err
 	}
 
 	dbm := -113
@@ -199,27 +251,28 @@ func (h *ModemHandler) GetModemSignal(w http.ResponseWriter, r *http.Request) {
 		"dbm":       dbm,
 	}
 	addExtendedSignal(conn, signal)
-
-	respondJSON(w, http.StatusOK, signal)
+	return signal, nil
 }
 
 func getICCID(conn *service.ModemConn) (string, error) {
-	if iccid, err := conn.GetICCID(); err == nil && strings.TrimSpace(iccid) != "" {
-		return strings.TrimSpace(iccid), nil
+	if iccid, err := conn.GetICCID(); err == nil {
+		if normalized := normalizeICCID(iccid); normalized != "" {
+			return normalized, nil
+		}
 	}
 
 	for _, command := range []string{"AT+QCCID", "AT+ICCID?", "AT+CCID?"} {
-		responses, err := conn.SendCommand(command)
+		responses, err := conn.SendOptionalCommand(command)
 		if err != nil {
 			continue
 		}
 		if fields, ok := firstATFields(responses, "+QCCID", "+ICCID", "+CCID"); ok && len(fields) > 0 {
-			if iccid := normalizeDigits(fields[0]); iccid != "" {
+			if iccid := normalizeICCID(fields[0]); iccid != "" {
 				return iccid, nil
 			}
 		}
 		for _, line := range responses {
-			if iccid := normalizeDigits(line); len(iccid) >= 18 && len(iccid) <= 22 {
+			if iccid := normalizeICCID(line); iccid != "" {
 				return iccid, nil
 			}
 		}
@@ -229,7 +282,7 @@ func getICCID(conn *service.ModemConn) (string, error) {
 }
 
 func queryRegistration(conn *service.ModemConn, command string, label string) (int, int, error) {
-	responses, err := conn.SendCommand(command)
+	responses, err := conn.SendOptionalCommand(command)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -309,7 +362,7 @@ func hasCellIdentity(signal map[string]any) bool {
 }
 
 func queryCESQ(conn *service.ModemConn) (map[string]any, error) {
-	responses, err := conn.SendCommand("AT+CESQ")
+	responses, err := conn.SendOptionalCommand("AT+CESQ")
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +397,7 @@ func queryCESQ(conn *service.ModemConn) (map[string]any, error) {
 }
 
 func queryQCSQ(conn *service.ModemConn) (map[string]any, error) {
-	responses, err := conn.SendCommand("AT+QCSQ")
+	responses, err := conn.SendOptionalCommand("AT+QCSQ")
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +442,7 @@ func queryRegistrationCell(conn *service.ModemConn) (map[string]any, error) {
 	}
 
 	for _, query := range queries {
-		responses, err := conn.SendCommand(query.command)
+		responses, err := conn.SendOptionalCommand(query.command)
 		if err != nil {
 			continue
 		}
@@ -419,7 +472,7 @@ func queryRegistrationCell(conn *service.ModemConn) (map[string]any, error) {
 }
 
 func queryQENGServingCell(conn *service.ModemConn) (map[string]any, error) {
-	responses, err := conn.SendCommand(`AT+QENG="servingcell"`)
+	responses, err := conn.SendOptionalCommand(`AT+QENG="servingcell"`)
 	if err != nil {
 		return nil, err
 	}
@@ -534,7 +587,7 @@ func parseQENGNR(result map[string]any, values []string) {
 }
 
 func queryMUESTATSRadio(conn *service.ModemConn) (map[string]any, error) {
-	responses, err := conn.SendCommand(`AT+MUESTATS="radio"`)
+	responses, err := conn.SendOptionalCommand(`AT+MUESTATS="radio"`)
 	if err != nil {
 		return nil, err
 	}
@@ -686,6 +739,14 @@ func normalizeDigits(value string) string {
 	}, value)
 }
 
+func normalizeICCID(value string) string {
+	iccid := normalizeDigits(value)
+	if len(iccid) < 18 || len(iccid) > 22 {
+		return ""
+	}
+	return iccid
+}
+
 func intField(value string) int {
 	n, _ := strconv.Atoi(strings.TrimSpace(value))
 	return n
@@ -701,6 +762,8 @@ func simStatusLabel(status string) string {
 		return "需要 PUK"
 	case "PH-SIM PIN":
 		return "需要设备 PIN"
+	case "ERROR":
+		return "读取失败"
 	default:
 		if strings.TrimSpace(status) == "" {
 			return "-"
@@ -805,10 +868,10 @@ func (h *ModemHandler) SendModemSms(w http.ResponseWriter, r *http.Request) {
 		SmsIDs:        "",
 		ReceiveTime:   time.Now(),
 		ReceiveNumber: req.Number,
-		SendNumber:    conn.Number,
+		SendNumber:    conn.State().Number,
 		Direction:     "out",
 		ModemName:     conn.Name,
-		DeviceIMEI:    conn.IMEI,
+		DeviceIMEI:    conn.State().IMEI,
 	}
 	service.EnrichSmsCardInfo(sms, conn)
 	webhookService := service.NewWebhookService()

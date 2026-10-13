@@ -38,6 +38,8 @@ const (
 	WebhookEventAlertResolved         = "alert_resolved"
 	WebhookEventSmsSyncCompleted      = "sms_sync_completed"
 	WebhookEventSystemUpdateCompleted = "system_update_completed"
+	WebhookEventModemOnline           = "modem_online"
+	WebhookEventIPChanged             = "ip_changed"
 )
 
 var (
@@ -71,6 +73,10 @@ func NormalizeWebhookEventType(eventType string) string {
 		return WebhookEventSmsSyncCompleted
 	case WebhookEventSystemUpdateCompleted:
 		return WebhookEventSystemUpdateCompleted
+	case WebhookEventModemOnline:
+		return WebhookEventModemOnline
+	case WebhookEventIPChanged:
+		return WebhookEventIPChanged
 	case "", WebhookEventSmsReceived:
 		return WebhookEventSmsReceived
 	default:
@@ -88,7 +94,9 @@ func IsKnownWebhookEventType(eventType string) bool {
 		WebhookEventAlertTriggered,
 		WebhookEventAlertResolved,
 		WebhookEventSmsSyncCompleted,
-		WebhookEventSystemUpdateCompleted:
+		WebhookEventSystemUpdateCompleted,
+		WebhookEventModemOnline,
+		WebhookEventIPChanged:
 		return true
 	default:
 		return false
@@ -646,6 +654,25 @@ func sampleWebhookEvent(eventType string) WebhookEvent {
 				"current_version": "1.0.0",
 				"latest_version":  "1.1.0",
 				"restart":         true,
+			},
+		}
+	case WebhookEventModemOnline:
+		return WebhookEvent{
+			Type:      WebhookEventModemOnline,
+			Timestamp: now,
+			Data: map[string]any{
+				"modem_name": "ttyUSB2",
+			},
+		}
+	case WebhookEventIPChanged:
+		return WebhookEvent{
+			Type:      WebhookEventIPChanged,
+			Timestamp: now,
+			Data: map[string]any{
+				"old_ips":     "192.168.1.100",
+				"new_ips":     "10.0.0.50",
+				"added_ips":   "10.0.0.50",
+				"removed_ips": "192.168.1.100",
 			},
 		}
 	default:

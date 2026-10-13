@@ -2,5 +2,5 @@ package webview
 
 import "embed"
 
-//go:embed *
+//go:embed dist
 var FS embed.FS

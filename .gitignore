@@ -25,6 +25,10 @@ Thumbs.db
 *.so
 *.dylib
 *.out
+webui/node_modules/
+webui/.vite/
+webview/dist/
+.pnpm-store/
 
 # Go workspace
 go.work
